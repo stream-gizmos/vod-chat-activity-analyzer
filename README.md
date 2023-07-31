@@ -2,6 +2,16 @@
 
 <a href="https://ibb.co/Ch5gz26"><img src="https://i.ibb.co/syvn2HC/Screenshot-8.png" alt="Screenshot-8" border="0"></a>
 
+## Table of Contents
+- [Features](#features)
+- [How to Use](#how-to-use)
+- [Live Deployment](#live-deployment)
+- [Running Locally](#running-locally)
+- [Contributing](#contributing)
+- [Known Limitations](#known-limitations)
+- [License](#license)
+
+
 ## Project Overview
 
 Hosted live here: https://twitchactivitytracker-3cdaa3ec33c1.herokuapp.com/
