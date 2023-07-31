@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analysis Result</title>
+    <!-- Load Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Twitch Chat Activity Result:</h1>
+    <div id="graph"></div>
+    <script>
+        var graph = {{ graphJSON | safe }};
+        Plotly.newPlot('graph', graph.data, graph.layout);
+    </script>
+</body>
+</html>

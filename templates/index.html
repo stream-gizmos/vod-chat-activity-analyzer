@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twitch Chat Speed Graph</title>
+</head>
+<body>
+    <h1>Welcome to the Twitch Chat Activity Tracker!</h1>
+    <form action="{{ url_for('start_download') }}" method="POST">
+        <label for="url">Enter the Twitch VOD URL:</label>
+        <input type="text" id="url" name="url" required>
+        <button type="submit">Find how fast your chat was!</button>
+    </form>
+    <p>Developed by <a href="https://github.com/Deep-Chill">NBukhari</a></p>
+</body>
+</html>
