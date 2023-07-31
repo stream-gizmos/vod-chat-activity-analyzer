@@ -14,7 +14,7 @@ The application is built using Python and Flask, and leverages the chat_download
 
 ## Features
 
-- **Twitch VOD Chat Download**: The application downloads chat history from Twitch VODs using the URL provided by the user. It can handle streams of various sizes, from smaller streams to larger streams with high chat activity.
+- **Twitch VOD Chat Download**: The application downloads chat history from Twitch VODs using the URL provided by the user. It can handle streams of various sizes, from smaller streams to medium-large streams but not very large streams due to reasons mentioned in the Known Limitations section below.
 - **Interactive Visualization**: The application generates an interactive line graph that plots the number of chat messages over time. The X-axis represents time in minutes since the start of the VOD, and the Y-axis represents the number of messages. 
 - **Rolling Averages**: The line graph displays rolling averages of chat activity for three different time intervals: 15 seconds, 60 seconds, and 5 minutes. This allows users to observe chat activity trends at different granularities.
 
@@ -36,6 +36,11 @@ The application is live and can be accessed at [[heroku]](https://twitchactivity
 1. On the homepage, enter the URL of the Twitch VOD whose chat activity you want to analyze.
 2. Click the "Find how fast your chat was!" button. The application will start downloading the chat history and processing it.
 3. Once the data processing is done, you will be redirected to a page that displays the visualization of the chat activity. You can hover over the graph to see the exact number of messages at any given time point.
+
+## Known Limitations
+
+Due to the limitations of Heroku's 30-second timeout for requests, this application may not be able to handle extremely active Twitch chats that have thousands of messages per minute. In such cases, the application might timeout before it finishes downloading and processing the chat data. This issue is primarily observed with larger streams that have high chat activity. I am actively exploring solutions to address this limitation in future versions of the application.
+
 
 ## Technology Stack
 
