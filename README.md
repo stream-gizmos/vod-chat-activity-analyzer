@@ -3,13 +3,16 @@
 <a href="https://ibb.co/Ch5gz26"><img src="https://i.ibb.co/syvn2HC/Screenshot-8.png" alt="Screenshot-8" border="0" width="100%"></a>
 
 ## Table of Contents
+- [Project Overview](#Project-Overview)
 - [Features](#features)
-- [How to Use](#how-to-use)
 - [Live Deployment](#live-deployment)
-- [Running Locally](#running-locally)
-- [Contributing](#contributing)
+- [Usage](#usage)
 - [Known Limitations](#known-limitations)
+- [Technology Stack](#tech-stack)
+- [Future](#future)
+- [Contributing](#contributing)
 - [License](#license)
+- [Contact](#contact)
 
 
 ## Project Overview
