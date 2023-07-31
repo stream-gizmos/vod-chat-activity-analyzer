@@ -1,6 +1,6 @@
 # Twitch Chat Activity Visualizer
 
-<a href="https://ibb.co/Ch5gz26"><img src="https://i.ibb.co/syvn2HC/Screenshot-8.png" alt="Screenshot-8" border="0"></a>
+<a href="https://ibb.co/Ch5gz26"><img src="https://i.ibb.co/syvn2HC/Screenshot-8.png" alt="Screenshot-8" border="0" width="100%"></a>
 
 ## Table of Contents
 - [Features](#features)
