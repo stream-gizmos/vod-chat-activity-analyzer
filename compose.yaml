@@ -3,4 +3,5 @@ services:
     build: .
     stop_signal: SIGINT
     environment:
+      FLASK_ENV:
       FLASK_DEBUG:
