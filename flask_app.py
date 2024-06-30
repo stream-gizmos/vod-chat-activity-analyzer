@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
-from chat_downloader import ChatDownloader
 import json
+
 import pandas as pd
 import plotly
 import plotly.graph_objects as go
-from datetime import timedelta
+from chat_downloader import ChatDownloader
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
@@ -21,11 +21,14 @@ def start_download():
 
     chat = ChatDownloader().get_chat(url)  # create a generator
 
+    # List to hold time_text of each message
     list_of_times = []
 
     for message in chat:
+        # Append the time_text of each message to the list
         list_of_times.append(message['time_in_seconds'])
 
+    # Save the list of times to a JSON file named after the VOD number
     with open(f'{vod_number}_times.json', 'w') as f:
         json.dump(list_of_times, f)
 
@@ -33,20 +36,26 @@ def start_download():
 
 @app.route('/display_graph/<vod_number>', methods=['GET'])
 def display_graph(vod_number):
+    # Load the JSON data from a file
     with open(f'{vod_number}_times.json', 'r') as f:
         data = json.load(f)
 
     df = pd.DataFrame(data, columns=['timestamp'])
 
+    # Convert timestamp to timedelta
     df['timestamp'] = pd.to_timedelta(df['timestamp'], unit='s')
 
+    # Assign a message count of 1 for each timestamp
     df['message'] = 1
 
+    # Resample the data into 5 second bins, filling in any missing seconds with 0
     df.set_index('timestamp', inplace=True)
     df = df.resample('5S').sum()
 
+    # Define your time intervals in seconds
     intervals = ['15S', '60S', '300S']
 
+    # Create a new figure
     fig = go.Figure()
 
     # For each interval
@@ -77,5 +86,4 @@ def display_graph(vod_number):
     return render_template('graph.html', graphJSON=graphJSON)
 
 if __name__ == "__main__":
-    app.run(debug=False)
-
+    app.run(host="0.0.0.0", port=8080)

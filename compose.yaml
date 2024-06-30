@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    environment:
+      FLASK_ENV:
+      FLASK_DEBUG:
