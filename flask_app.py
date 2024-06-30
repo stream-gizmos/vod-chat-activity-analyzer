@@ -6,6 +6,8 @@ import plotly.graph_objects as go
 from chat_downloader import ChatDownloader
 from flask import Flask, render_template, request, redirect, url_for
 
+from lib import hash_to_chat_file, hash_to_meta_file, hash_to_times_file, url_to_hash
+
 app = Flask(__name__)
 
 @app.route('/')
@@ -15,36 +17,37 @@ def home():
 @app.route('/start_download', methods=['POST'])
 def start_download():
     url = request.form.get('url')  # Assume you're getting the URL from a form on your homepage
+    video_hash = url_to_hash(url)
 
-    # Get the VOD number from the URL
-    vod_number = url.split('/')[-1]
+    with open(hash_to_meta_file(video_hash), 'w') as fp:
+        data = {
+            'url': url,
+        }
+        json.dump(data, fp, indent=2)
 
-    chat = ChatDownloader().get_chat(url)  # create a generator
+    chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash), indent=0)
 
-    # List to hold time_text of each message
     list_of_times = []
-
     for message in chat:
-        # Append the time_text of each message to the list
         list_of_times.append(message['time_in_seconds'])
 
-    # Save the list of times to a JSON file named after the VOD number
-    with open(f'{vod_number}_times.json', 'w') as f:
-        json.dump(list_of_times, f)
+    with open(hash_to_times_file(video_hash), 'w') as fp:
+        json.dump(list_of_times, fp)
 
-    return redirect(url_for('display_graph', vod_number=vod_number))
+    return redirect(url_for('display_graph', video_hash=video_hash))
 
-@app.route('/display_graph/<vod_number>', methods=['GET'])
-def display_graph(vod_number):
-    # Load the JSON data from a file
-    with open(f'{vod_number}_times.json', 'r') as f:
-        data = json.load(f)
+@app.route('/display_graph/<video_hash>', methods=['GET'])
+def display_graph(video_hash):
+    with open(hash_to_meta_file(video_hash), 'r') as fp:
+        meta = json.load(fp)
+
+    with open(hash_to_times_file(video_hash), 'r') as fp:
+        data = json.load(fp)
 
     df = pd.DataFrame(data, columns=['timestamp'])
 
     # Convert timestamp to timedelta
     df['timestamp'] = pd.to_timedelta(df['timestamp'], unit='s')
-
     # Assign a message count of 1 for each timestamp
     df['message'] = 1
 
@@ -71,7 +74,6 @@ def display_graph(vod_number):
     fig.update_layout(
         autosize=True,
         hovermode='x',
-        title='Twitch Chat Activity Tracker',
         xaxis_title='Time (in minutes)',  # change x-axis label to minutes
         yaxis_title='Number of messages',
         xaxis=dict(
@@ -81,9 +83,9 @@ def display_graph(vod_number):
         )
     )
 
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    return render_template('graph.html', graphJSON=graphJSON)
+    return render_template('graph.html', url=meta['url'], graph_json=graph_json)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

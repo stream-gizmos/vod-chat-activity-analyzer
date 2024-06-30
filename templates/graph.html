@@ -7,9 +7,12 @@
 </head>
 <body>
     <h1>Chat Activity Result</h1>
+    <p>
+        VOD URL: <a href="{{ url }}" target="_blank">{{ url }}</a>
+    </p>
     <div id="graph"></div>
     <script>
-        const graph = {{ graphJSON | safe }}
+        const graph = {{ graph_json | safe }}
         Plotly.newPlot('graph', graph.data, graph.layout)
     </script>
 </body>
