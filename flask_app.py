@@ -68,19 +68,21 @@ def display_graph(video_hash):
             x=df_resampled.index.total_seconds() / 60,  # convert seconds to minutes
             y=df_resampled['message'],
             mode='lines',
-            name=interval
+            name=interval,
         ))
 
     fig.update_layout(
+        title='Number of messages',
         autosize=True,
+        height=300,
+        margin=dict(t=30, b=0, l=0, r=0, pad=5),
         hovermode='x',
-        xaxis_title='Time (in minutes)',  # change x-axis label to minutes
-        yaxis_title='Number of messages',
+        xaxis_title='Time (in minutes)',
         xaxis=dict(
             tickmode='linear',
             tick0=0,
-            dtick=30  # change interval to 30 minutes
-        )
+            dtick=30,  # change interval to 30 minutes
+        ),
     )
 
     graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
