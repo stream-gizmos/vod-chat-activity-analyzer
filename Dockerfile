@@ -17,4 +17,6 @@ EOT
 
 COPY . .
 
+STOPSIGNAL SIGINT
+
 CMD ["python", "flask_app.py"]
