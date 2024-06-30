@@ -8,13 +8,13 @@ EOT
 
 WORKDIR /var/app/
 
-COPY . .
+COPY requirements.txt .
 
 RUN <<EOT
 set -ex
 pip install -r requirements.txt
 EOT
 
-ENTRYPOINT ["python"]
+COPY . .
 
-CMD ["flask_app.py"]
+CMD ["python", "flask_app.py"]
