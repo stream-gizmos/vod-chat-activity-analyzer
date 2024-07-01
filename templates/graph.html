@@ -7,13 +7,16 @@
 </head>
 <body>
     <h1>Chat Activity Result</h1>
-    <p>
-        VOD URL: <a href="{{ url }}" target="_blank">{{ url }}</a>
-    </p>
-    <div id="graph"></div>
-    <script>
-        const graph = {{ graph_json | safe }}
-        Plotly.newPlot('graph', graph.data, graph.layout)
-    </script>
+
+    {% for graph_data in graphs %}
+        <p>
+            <b>{{ loop.index0 + 1 }}. VOD URL</b>: <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
+        </p>
+        <div id="graph{{ loop.index0 }}"></div>
+        <script>
+            const graph{{ loop.index0 }} = {{ graph_data.json | safe }}
+            Plotly.newPlot('graph{{ loop.index0 }}', graph{{ loop.index0 }}.data, graph{{ loop.index0 }}.layout)
+        </script>
+    {% endfor %}
 </body>
 </html>
