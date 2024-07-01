@@ -17,6 +17,8 @@ EOT
 
 COPY . .
 
+VOLUME ./data
+
 STOPSIGNAL SIGINT
 
 CMD ["python", "flask_app.py"]
