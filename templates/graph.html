@@ -8,14 +8,14 @@
 <body>
     <h1>Chat Activity Result</h1>
 
-    {% for graph_data in graphs %}
+    {% for alias, graph_data in graphs.items() %}
         <p>
             <b>{{ loop.index0 + 1 }}. VOD URL</b>: <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
         </p>
-        <div id="graph{{ loop.index0 }}"></div>
+        <div id="{{ alias }}"></div>
         <script>
-            const graph{{ loop.index0 }} = {{ graph_data.json | safe }}
-            Plotly.newPlot('graph{{ loop.index0 }}', graph{{ loop.index0 }}.data, graph{{ loop.index0 }}.layout)
+            const {{ alias }} = {{ graph_data.json | safe }}
+            Plotly.newPlot('{{ alias }}', {{ alias }}.data, {{ alias }}.layout)
         </script>
     {% endfor %}
 </body>

@@ -52,9 +52,8 @@ def start_download():
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(',')
 
-    graphs = []
-
-    for video_hash in video_hashes:
+    graphs = {}
+    for i, video_hash in enumerate(video_hashes, start=1):
         with open(hash_to_meta_file(video_hash), 'r') as fp:
             meta = json.load(fp)
 
@@ -104,7 +103,7 @@ def display_graph(video_hashes):
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-        graphs.append(dict(url=meta['url'], json=graph_json))
+        graphs[f'graph{i}'] = dict(url=meta['url'], json=graph_json)
 
     return render_template('graph.html', graphs=graphs)
 
