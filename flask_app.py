@@ -12,14 +12,18 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template(
+        'index.html',
+        error=request.args.get('error'),
+    )
 
 @app.route('/start_download', methods=['POST'])
 def start_download():
     urls = request.form.getlist('url[]')
+    urls = map(str.strip, urls)
     urls = filter(None, urls)
     urls = filter(is_http_url, urls)
-    urls = list(urls)
+    urls = set(urls)
 
     if not len(urls):
         return redirect(url_for('index', error='Wrong URLs provided'))
