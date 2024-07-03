@@ -8,7 +8,7 @@
     {% if error %}
         <p style="color: red;">{{ error }}</p>
     {% endif %}
-    <form action="{{ url_for('start_download') }}" method="POST">
+    <form action="{{ url_for("front.start_download") }}" method="POST">
         <label for="url1">
             Enter the same VOD URLs on different platforms (Twitch/YouTube/etc):
         </label>

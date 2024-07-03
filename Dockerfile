@@ -21,4 +21,4 @@ VOLUME ./data
 
 STOPSIGNAL SIGINT
 
-CMD ["python", "flask_app.py"]
+CMD ["python", "app.py"]

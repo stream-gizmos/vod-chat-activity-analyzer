@@ -4,20 +4,22 @@ import pandas as pd
 import plotly
 import plotly.graph_objects as go
 from chat_downloader import ChatDownloader
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for
 
 from lib import hash_to_chat_file, hash_to_meta_file, hash_to_times_file, is_http_url, url_to_hash
 
-app = Flask(__name__)
+front_bp = Blueprint('front', __name__)
 
-@app.route('/')
+
+@front_bp.route('/')
 def index():
     return render_template(
         'index.html',
         error=request.args.get('error'),
     )
 
-@app.route('/start_download', methods=['POST'])
+
+@front_bp.route('/start_download', methods=['POST'])
 def start_download():
     urls = request.form.getlist('url[]')
     urls = map(str.strip, urls)
@@ -26,7 +28,7 @@ def start_download():
     urls = set(urls)
 
     if not len(urls):
-        return redirect(url_for('index', error='Wrong URLs provided'))
+        return redirect(url_for("front.index", error='Wrong URLs provided'))
 
     hashes = []
     for url in sorted(urls):
@@ -50,9 +52,10 @@ def start_download():
 
     hashes_string = ",".join(hashes)
 
-    return redirect(url_for('display_graph', video_hashes=hashes_string))
+    return redirect(url_for("front.display_graph", video_hashes=hashes_string))
 
-@app.route('/display_graph/<video_hashes>', methods=['GET'])
+
+@front_bp.route('/display_graph/<video_hashes>', methods=['GET'])
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(',')
 
@@ -110,6 +113,3 @@ def display_graph(video_hashes):
         graphs[f'graph{i}'] = dict(url=meta['url'], json=graph_json)
 
     return render_template('graph.html', graphs=graphs)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
