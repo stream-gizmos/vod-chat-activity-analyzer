@@ -38,6 +38,18 @@ The application is built using Python and Flask, and leverages the chat_download
 3. Run `flask_app.py` to start the Flask server.
 4. Visit `localhost:5000` in your web browser to view the application.
 
+### Bundle Windows EXE
+
+(Optional) You need to install Python and PyInstaller locally on a Windows machine. Then run the command to update the `app.spec` file:
+
+    pyinstaller -F --add-data "flask_app/templates:flask_app/templates" --add-data "flask_app/static:flask_app/static" app.py
+
+Then you can use a Compose service `bundler` to build an `app.exe` file:
+
+    docker compose run --rm bundler
+
+(Optional) If you have changed the `requirements.txt` content, it's better to rebuild the `bundler` image to speed up the bundling.
+
 ### User Guide
 
 1. On the homepage, enter the URL of the Twitch VOD whose chat activity you want to analyze.

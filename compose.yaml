@@ -4,3 +4,10 @@ services:
     environment:
       FLASK_ENV:
       FLASK_DEBUG:
+  bundler:
+    profiles: [ tools ]
+    build:
+      dockerfile: bundler/Dockerfile
+      context: .
+    volumes:
+      - .:/src/:rw

@@ -1,2 +1,4 @@
+/data/
+/dist/
 .env
 compose.override.yaml
