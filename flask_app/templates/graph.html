@@ -8,7 +8,7 @@
     <h1>Chat Activity Result</h1>
 
     {% for alias, graph_data in graphs.items() %}
-        <p>
+        <p id="vod_{{ alias }}">
             <b>{{ loop.index0 + 1 }}. VOD URL</b>:
             <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
         </p>

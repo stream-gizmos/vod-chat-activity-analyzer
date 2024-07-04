@@ -1,12 +1,11 @@
 import json
 
-import pandas as pd
 import plotly
-import plotly.graph_objects as go
 from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from flask_app.services.lib import hash_to_chat_file, hash_to_meta_file, hash_to_times_file, is_http_url, url_to_hash
+from flask_app.services.lib import build_scatter_fig, hash_to_chat_file, hash_to_meta_file, hash_to_times_file, \
+    is_http_url, times_data_to_rolling_sums, url_to_hash
 
 front_bp = Blueprint('front', __name__)
 
@@ -62,6 +61,8 @@ def start_download():
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
+    intervals = ["15S", "60S", "300S"]
+
     graphs = {}
     for i, video_hash in enumerate(video_hashes, start=1):
         with open(hash_to_meta_file(video_hash), "r") as fp:
@@ -70,46 +71,11 @@ def display_graph(video_hashes):
         with open(hash_to_times_file(video_hash), "r") as fp:
             data = json.load(fp)
 
-        df = pd.DataFrame(data, columns=["timestamp"])
+        interval_dataframes = {}
+        for interval, interval_df in times_data_to_rolling_sums(data, intervals):
+            interval_dataframes[interval] = interval_df
 
-        # Convert timestamp to timedelta
-        df["timestamp"] = pd.to_timedelta(df["timestamp"], unit="s")
-        # Assign a message count of 1 for each timestamp
-        df["message"] = 1
-
-        # Resample the data into 5 second bins, filling in any missing seconds with 0
-        df.set_index("timestamp", inplace=True)
-        df = df.resample("5S").sum()
-
-        # Define your time intervals in seconds
-        intervals = ["15S", "60S", "300S"]
-
-        # Create a new figure
-        fig = go.Figure()
-
-        # For each interval
-        for interval in intervals:
-            df_resampled = df.rolling(interval).sum()
-            fig.add_trace(go.Scatter(
-                x=df_resampled.index.total_seconds() / 60,  # convert seconds to minutes
-                y=df_resampled["message"],
-                mode="lines",
-                name=interval,
-            ))
-
-        fig.update_layout(
-            title="Number of messages",
-            autosize=True,
-            height=300,
-            margin=dict(t=30, b=0, l=0, r=0, pad=5),
-            hovermode="x",
-            xaxis_title="Time (in minutes)",
-            xaxis=dict(
-                tickmode="linear",
-                tick0=0,
-                dtick=30,  # change interval to 30 minutes
-            ),
-        )
+        fig = build_scatter_fig(interval_dataframes, "Number of messages")
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
