@@ -41,7 +41,7 @@ def start_download():
             }
             json.dump(data, fp, indent=2)
 
-        chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash), indent=0)
+        chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash))
 
         list_of_times = []
         for message in chat:
