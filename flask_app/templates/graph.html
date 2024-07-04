@@ -1,21 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>VOD Chat Activity Analyzer - Results</title>
-    <script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js')}}"></script>
-</head>
-<body>
+{% extends "base-layout.html" %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for("static", filename="plotly-latest.min.js") }}" defer></script>
+{% endblock %}
+
+{% block content %}
     <h1>Chat Activity Result</h1>
 
     {% for alias, graph_data in graphs.items() %}
         <p>
-            <b>{{ loop.index0 + 1 }}. VOD URL</b>: <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
+            <b>{{ loop.index0 + 1 }}. VOD URL</b>:
+            <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
         </p>
         <div id="{{ alias }}"></div>
-        <script>
-            const {{ alias }} = {{ graph_data.json | safe }}
-            Plotly.newPlot('{{ alias }}', {{ alias }}.data, {{ alias }}.layout)
-        </script>
     {% endfor %}
-</body>
-</html>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            {% for alias, graph_data in graphs.items() %}
+                const {{ alias }} = {{ graph_data.json | safe }}
+                Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout)
+            {% endfor %}
+        });
+    </script>
+{% endblock %}
