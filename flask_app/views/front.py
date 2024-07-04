@@ -45,6 +45,9 @@ def start_download():
 
         list_of_times = []
         for message in chat:
+            if message["time_in_seconds"] < 0:
+                continue
+
             list_of_times.append(message["time_in_seconds"])
 
         with open(hash_to_times_file(video_hash), "w") as fp:
