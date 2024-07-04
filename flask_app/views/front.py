@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from lib import hash_to_chat_file, hash_to_meta_file, hash_to_times_file, is_http_url, url_to_hash
+from flask_app.services.lib import hash_to_chat_file, hash_to_meta_file, hash_to_times_file, is_http_url, url_to_hash
 
 front_bp = Blueprint('front', __name__)
 
