@@ -16,7 +16,7 @@ if [ -f requirements.txt ]; then
 fi
 
 if [[ "$@" == "" ]]; then
-    pyinstaller --clean -y --dist ./dist/windows --workpath /tmp *.spec
+    pyinstaller -y --dist ./dist/windows *.spec
     chown -R --reference=. ./dist/windows
 else
     sh -c "$@"

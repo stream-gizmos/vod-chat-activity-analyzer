@@ -32,7 +32,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 RUN <<EOT
 set -ex
 
-chmod +x /entrypoint.sh
+chmod a+x /entrypoint.sh
 
 # we need wine for this to work, so we'll use the PPA
 dpkg --add-architecture i386
