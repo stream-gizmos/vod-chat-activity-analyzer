@@ -35,8 +35,24 @@ The application is built using Python and Flask, and leverages the chat_download
 
 1. Clone this repository to your local machine.
 2. Install the required Python packages listed in `requirements.txt`. It's recommended to do this in a virtual environment.
-3. Run `flask_app.py` to start the Flask server.
-4. Visit `localhost:5000` in your web browser to view the application.
+3. Run `web_app.py` to start the Flask server.
+4. Visit http://localhost:8080 in your web browser to view the application.
+
+### Bundle Windows EXE
+
+If the contents of the `chat-analyzer.spec` file are up-to-date, it is sufficient to use a Compose `bundler` service to build the `app.exe` file:
+
+    docker compose run --rm bundler
+
+Otherwise, you need a Windows machine to sync the spec file.  First of all, install Python and PyInstaller locally.  Then install the application dependencies:
+
+    pip install -r requirements.txt
+
+Then run the command to update the spec file:
+
+    pyinstaller --name chat-analyzer --onefile --collect-datas chat_downloader.formatting --add-data "flask_app/templates:flask_app/templates" --add-data "flask_app/static:flask_app/static" standalone_app.py
+
+(Optional) If you have changed the application dependencies, it's better to rebuild the `bundler` image to speed up the bundling.
 
 ### User Guide
 
