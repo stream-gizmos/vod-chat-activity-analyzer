@@ -5,12 +5,18 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Chat Activity Result</h1>
+    <h1>Chat Activity Statistics</h1>
 
-    {% for alias, graph_data in graphs.items() %}
+    {% for alias, graph_data in graphs | dictsort %}
         <p id="vod_{{ alias }}">
-            <b>{{ loop.index0 + 1 }}. VOD URL</b>:
-            <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
+            {% if graph_data.url %}
+                <b>{{ loop.index0 + 1 }}. VOD URL</b>:
+                <a href="{{ graph_data.url }}" target="_blank">
+                    {{ graph_data.caption or graph_data.url }}
+                </a>
+            {% else %}
+                <b>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</b>
+            {% endif %}
         </p>
         <div id="{{ alias }}"></div>
     {% endfor %}
