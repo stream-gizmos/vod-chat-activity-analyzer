@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 from hashlib import md5
 from typing import TypeVar
 from urllib.parse import urlparse
@@ -51,45 +52,98 @@ def build_dataframe_by_timestamp(data):
     return df
 
 
-def make_buckets(df: pd.DataFrame, intervals: list[IntervalWindow]) -> dict[IntervalWindow, pd.DataFrame]:
+def normalize_timeline(df: pd.DataFrame, time_step: int) -> pd.DataFrame:
     # Resample the data into 5 second bins, filling in any missing seconds with 0
-    df = df.resample("5S").sum()
+    return df.resample(f"{time_step}s").sum()
 
-    # Convert absolute time to duration from the video start
-    df["time_in_seconds"] = df.index.to_series().sub(df.index[0])
-    df.set_index("time_in_seconds", inplace=True)
 
+def make_buckets(df: pd.DataFrame, windows: list[IntervalWindow]) -> dict[IntervalWindow, pd.DataFrame]:
     result = {}
-    for interval in intervals:
+    for interval in windows:
         df_resampled = df.rolling(interval).sum()
         result[interval] = df_resampled
 
     return result
 
 
-def build_scatter_fig(scatter_dataframes: dict, figure_title: str, xaxis_title: str):
+def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
     fig = go.Figure()
 
-    for line_name, df in scatter_dataframes.items():
+    if not len(rolling_dataframes):
+        return fig
+
+    any_key = next(iter(rolling_dataframes))
+    points_count = len(rolling_dataframes[any_key])
+    start_timestamp: datetime = rolling_dataframes[any_key].index[0].to_pydatetime()
+
+    for line_name, df in rolling_dataframes.items():
+        df["timestamp"] = df.index
+        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
+        df.set_index("timedelta", inplace=True)
+
         fig.add_trace(go.Scatter(
-            x=df.index.total_seconds() / 60,  # convert seconds to minutes
+            x=df.index.map(format_timedelta),
             y=df["messages"],
             mode="lines",
             name=line_name,
         ))
 
+    xaxis_captions, xaxis_captions_detailed = build_timedelta_axis_captions(
+        start_timestamp,
+        points_count,
+        time_step,
+    )
+
     fig.update_layout(
         title=figure_title,
         autosize=True,
-        height=300,
+        height=330,
         margin=dict(t=30, b=0, l=0, r=0, pad=5),
-        hovermode="x",
+        hovermode="x unified",
         xaxis_title=xaxis_title,
         xaxis=dict(
-            tickmode="linear",
-            tick0=0,
-            dtick=30,  # change interval to 30 minutes
+            type='category',
+
+            tickmode='array',
+            tickvals=xaxis_captions,
+            ticktext=xaxis_captions_detailed,
+            tickfont_size=11,
+            ticklabelposition="outside right",
+            autotickangles=[0, 60, 90],
+
+            range=[0, min((3600 // time_step) * 3, points_count)],
+            rangeslider_visible=True,
+        ),
+        yaxis=dict(
+            fixedrange=True,
         ),
     )
 
     return fig
+
+
+def build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, time_step: int):
+    vals = []
+    text = []
+
+    for x in range(0, points_count, 3600 // time_step):
+        short_caption = format_timedelta(x * time_step)
+        point_timestamp = start_timestamp + timedelta(seconds=x * time_step)
+        vals.append(short_caption)
+        text.append(
+            f"{short_caption}<br>" +
+            f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
+            f"{point_timestamp.strftime('%H:%M:%S')}"
+        )
+
+    return vals, text
+
+
+def format_timedelta(td: int | timedelta) -> str:
+    if isinstance(td, timedelta):
+        td = td.total_seconds()
+
+    hours, remainder = divmod(td, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'

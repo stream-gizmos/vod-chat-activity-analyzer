@@ -6,7 +6,8 @@ from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
 from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, hash_to_chat_file, \
-    hash_to_meta_file, hash_to_times_file, hash_to_timestamps_file, is_http_url, make_buckets, url_to_hash
+    hash_to_meta_file, hash_to_times_file, hash_to_timestamps_file, is_http_url, make_buckets, normalize_timeline, \
+    url_to_hash
 
 front_bp = Blueprint('front', __name__)
 
@@ -66,7 +67,9 @@ def start_download():
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
-    intervals = ["15S", "60S", "300S"]
+    time_step = 5
+    rolling_windows = [f"{3 * time_step}s", f"{12 * time_step}s", f"{60 * time_step}s"]
+
     combined_df: pd.DataFrame | None = None
 
     graphs = {}
@@ -79,16 +82,18 @@ def display_graph(video_hashes):
         df = build_dataframe_by_timestamp(data)
         combined_df = df.copy() if combined_df is None else combined_df.add(df, fill_value=0)
 
-        interval_dataframes = make_buckets(df, intervals)
+        df = normalize_timeline(df, time_step)
+        rolling_dataframes = make_buckets(df, rolling_windows)
 
-        fig = build_scatter_fig(interval_dataframes, "Number of messages", "Video time (in minutes)")
+        fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Video time (in minutes)")
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"graph{i:02d}"] = dict(url=meta["url"], json=graph_json)
 
     if len(video_hashes) > 1 and combined_df is not None:
-        interval_dataframes = make_buckets(combined_df, intervals)
+        combined_df = normalize_timeline(combined_df, time_step)
+        rolling_dataframes = make_buckets(combined_df, rolling_windows)
 
-        fig = build_scatter_fig(interval_dataframes, "Number of messages", "Stream time (in minutes)")
+        fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Stream time (in minutes)")
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"graph{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
 
