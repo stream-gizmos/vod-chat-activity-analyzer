@@ -6,8 +6,7 @@ from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
 from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, hash_to_chat_file, \
-    hash_to_meta_file, hash_to_times_file, hash_to_timestamps_file, is_http_url, make_buckets, normalize_timeline, \
-    url_to_hash
+    hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, normalize_timeline, url_to_hash
 
 front_bp = Blueprint('front', __name__)
 
@@ -44,17 +43,13 @@ def start_download():
 
         chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash))
 
-        list_of_times = []
         list_of_timestamp = []
         for message in chat:
             if message["time_in_seconds"] < 0:
                 continue
 
-            list_of_times.append(message["time_in_seconds"])
             list_of_timestamp.append(message["timestamp"])
 
-        with open(hash_to_times_file(video_hash), "w") as fp:
-            json.dump(list_of_times, fp)
         with open(hash_to_timestamps_file(video_hash), "w") as fp:
             json.dump(list_of_timestamp, fp)
 

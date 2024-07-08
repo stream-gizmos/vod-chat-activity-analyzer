@@ -21,10 +21,6 @@ def hash_to_chat_file(video_hash: str) -> str:
     return f"data/{video_hash}_chat.jsonl"
 
 
-def hash_to_times_file(video_hash: str) -> str:
-    return f"data/{video_hash}_times.json"
-
-
 def hash_to_timestamps_file(video_hash: str) -> str:
     return f"data/{video_hash}_timestamps.json"
 
