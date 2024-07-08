@@ -41,7 +41,6 @@ def is_http_url(url):
 def build_dataframe_by_timestamp(data):
     df = pd.DataFrame(data, columns=["timestamp"])
 
-    # Convert timestamp to time
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, unit="us")
     # Assign a message count of 1 for each timestamp
     df["messages"] = 1
@@ -82,17 +81,13 @@ def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: in
         df.set_index("timedelta", inplace=True)
 
         fig.add_trace(go.Scatter(
-            x=df.index.map(format_timedelta),
+            x=df.index.map(humanize_timedelta),
             y=df["messages"],
             mode="lines",
             name=line_name,
         ))
 
-    xaxis_captions, xaxis_captions_detailed = build_timedelta_axis_captions(
-        start_timestamp,
-        points_count,
-        time_step,
-    )
+    xaxis_captions, xaxis_captions_detailed = build_timedelta_axis_captions(start_timestamp, points_count, time_step)
 
     fig.update_layout(
         title=figure_title,
@@ -127,9 +122,10 @@ def build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, 
     text = []
 
     for x in range(0, points_count, 3600 // time_step):
-        short_caption = format_timedelta(x * time_step)
-        point_timestamp = start_timestamp + timedelta(seconds=x * time_step)
+        short_caption = humanize_timedelta(x * time_step)
         vals.append(short_caption)
+
+        point_timestamp = start_timestamp + timedelta(seconds=x * time_step)
         text.append(
             f"{short_caption}<br>" +
             f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
@@ -139,11 +135,11 @@ def build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, 
     return vals, text
 
 
-def format_timedelta(td: int | timedelta) -> str:
-    if isinstance(td, timedelta):
-        td = td.total_seconds()
+def humanize_timedelta(total_seconds: int | timedelta) -> str:
+    if isinstance(total_seconds, timedelta):
+        total_seconds = total_seconds.total_seconds()
 
-    hours, remainder = divmod(td, 3600)
+    hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
 
     return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
