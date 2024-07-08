@@ -2,11 +2,11 @@ import json
 
 import pandas as pd
 import plotly
-import plotly.graph_objects as go
 from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from lib import hash_to_chat_file, hash_to_meta_file, hash_to_times_file, is_http_url, url_to_hash
+from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, hash_to_chat_file, \
+    hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, normalize_timeline, url_to_hash
 
 front_bp = Blueprint('front', __name__)
 
@@ -28,7 +28,7 @@ def start_download():
     urls = set(urls)
 
     if not len(urls):
-        return redirect(url_for("front.index", error="Wrong URLs provided"))
+        return redirect(url_for(".index", error="Wrong URLs provided"))
 
     hashes = []
     for url in sorted(urls):
@@ -43,73 +43,53 @@ def start_download():
 
         chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash))
 
-        list_of_times = []
+        list_of_timestamp = []
         for message in chat:
-            list_of_times.append(message["time_in_seconds"])
+            if message["time_in_seconds"] < 0:
+                continue
 
-        with open(hash_to_times_file(video_hash), "w") as fp:
-            json.dump(list_of_times, fp)
+            list_of_timestamp.append(message["timestamp"])
+
+        with open(hash_to_timestamps_file(video_hash), "w") as fp:
+            json.dump(list_of_timestamp, fp)
 
     hashes_string = ",".join(hashes)
 
-    return redirect(url_for("front.display_graph", video_hashes=hashes_string))
+    return redirect(url_for(".display_graph", video_hashes=hashes_string))
 
 
 @front_bp.route("/display_graph/<video_hashes>", methods=["GET"])
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
+    time_step = 5
+    rolling_windows = [f"{3 * time_step}s", f"{12 * time_step}s", f"{60 * time_step}s"]
+
+    combined_df: pd.DataFrame | None = None
+
     graphs = {}
     for i, video_hash in enumerate(video_hashes, start=1):
         with open(hash_to_meta_file(video_hash), "r") as fp:
             meta = json.load(fp)
-
-        with open(hash_to_times_file(video_hash), "r") as fp:
+        with open(hash_to_timestamps_file(video_hash), "r") as fp:
             data = json.load(fp)
 
-        df = pd.DataFrame(data, columns=["timestamp"])
+        df = build_dataframe_by_timestamp(data)
+        combined_df = df.copy() if combined_df is None else combined_df.add(df, fill_value=0)
 
-        # Convert timestamp to timedelta
-        df["timestamp"] = pd.to_timedelta(df["timestamp"], unit="s")
-        # Assign a message count of 1 for each timestamp
-        df["message"] = 1
+        df = normalize_timeline(df, time_step)
+        rolling_dataframes = make_buckets(df, rolling_windows)
 
-        # Resample the data into 5 second bins, filling in any missing seconds with 0
-        df.set_index("timestamp", inplace=True)
-        df = df.resample("5S").sum()
-
-        # Define your time intervals in seconds
-        intervals = ["15S", "60S", "300S"]
-
-        # Create a new figure
-        fig = go.Figure()
-
-        # For each interval
-        for interval in intervals:
-            df_resampled = df.rolling(interval).sum()
-            fig.add_trace(go.Scatter(
-                x=df_resampled.index.total_seconds() / 60,  # convert seconds to minutes
-                y=df_resampled["message"],
-                mode="lines",
-                name=interval,
-            ))
-
-        fig.update_layout(
-            title="Number of messages",
-            autosize=True,
-            height=300,
-            margin=dict(t=30, b=0, l=0, r=0, pad=5),
-            hovermode="x",
-            xaxis_title="Time (in minutes)",
-            xaxis=dict(
-                tickmode="linear",
-                tick0=0,
-                dtick=30,  # change interval to 30 minutes
-            ),
-        )
-
+        fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Video time (in minutes)")
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graphs[f"graph{i:02d}"] = dict(url=meta["url"], json=graph_json)
 
-        graphs[f"graph{i}"] = dict(url=meta["url"], json=graph_json)
+    if len(video_hashes) > 1 and combined_df is not None:
+        combined_df = normalize_timeline(combined_df, time_step)
+        rolling_dataframes = make_buckets(combined_df, rolling_windows)
+
+        fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Stream time (in minutes)")
+        graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graphs[f"graph{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
 
     return render_template("graph.html", graphs=graphs)

@@ -1,21 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>VOD Chat Activity Analyzer - Results</title>
-    <script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js')}}"></script>
-</head>
-<body>
-    <h1>Chat Activity Result</h1>
+{% extends "base-layout.html" %}
 
-    {% for alias, graph_data in graphs.items() %}
-        <p>
-            <b>{{ loop.index0 + 1 }}. VOD URL</b>: <a href="{{ graph_data.url }}" target="_blank">{{ graph_data.url }}</a>
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for("static", filename="plotly-2.32.0.min.js") }}" defer></script>
+{% endblock %}
+
+{% block content %}
+    <h1>Chat Activity Statistics</h1>
+
+    {% for alias, graph_data in graphs | dictsort %}
+        <p id="vod_{{ alias }}">
+            {% if graph_data.url %}
+                <b>{{ loop.index0 + 1 }}. VOD URL</b>:
+                <a href="{{ graph_data.url }}" target="_blank">
+                    {{ graph_data.caption or graph_data.url }}
+                </a>
+            {% else %}
+                <b>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</b>
+            {% endif %}
         </p>
         <div id="{{ alias }}"></div>
-        <script>
-            const {{ alias }} = {{ graph_data.json | safe }}
-            Plotly.newPlot('{{ alias }}', {{ alias }}.data, {{ alias }}.layout)
-        </script>
     {% endfor %}
-</body>
-</html>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            {% for alias, graph_data in graphs.items() %}
+                const {{ alias }} = {{ graph_data.json | safe }}
+                Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout)
+            {% endfor %}
+        });
+    </script>
+{% endblock %}
