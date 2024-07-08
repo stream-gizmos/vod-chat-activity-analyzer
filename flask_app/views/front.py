@@ -29,7 +29,7 @@ def start_download():
     urls = set(urls)
 
     if not len(urls):
-        return redirect(url_for("front.index", error="Wrong URLs provided"))
+        return redirect(url_for(".index", error="Wrong URLs provided"))
 
     hashes = []
     for url in sorted(urls):
@@ -60,7 +60,7 @@ def start_download():
 
     hashes_string = ",".join(hashes)
 
-    return redirect(url_for("front.display_graph", video_hashes=hashes_string))
+    return redirect(url_for(".display_graph", video_hashes=hashes_string))
 
 
 @front_bp.route("/display_graph/<video_hashes>", methods=["GET"])
