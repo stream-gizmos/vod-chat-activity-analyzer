@@ -5,8 +5,9 @@ import plotly
 from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, hash_to_chat_file, \
-    hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, normalize_timeline, url_to_hash
+from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, get_custom_emoticons, \
+    hash_to_chat_file, hash_to_emoticons_file, hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, \
+    mine_emoticons, normalize_timeline, url_to_hash
 
 front_bp = Blueprint('front', __name__)
 
@@ -30,6 +31,8 @@ def start_download():
     if not len(urls):
         return redirect(url_for(".index", error="Wrong URLs provided"))
 
+    custom_emoticons = get_custom_emoticons()
+
     hashes = []
     for url in sorted(urls):
         video_hash = url_to_hash(url)
@@ -43,15 +46,30 @@ def start_download():
 
         chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash))
 
-        list_of_timestamp = []
+        messages_timestamps = []
+        emoticons_timestamps: dict[str, list[int]] = {}
         for message in chat:
             if message["time_in_seconds"] < 0:
                 continue
 
-            list_of_timestamp.append(message["timestamp"])
+            messages_timestamps.append(message["timestamp"])
+
+            message_emotes = mine_emoticons(message["message"], message.get("emotes", []), custom_emoticons)
+            for emoticon in message_emotes:
+                if emoticon not in emoticons_timestamps:
+                    emoticons_timestamps[emoticon] = []
+
+                emoticons_timestamps[emoticon].append(message["timestamp"])
 
         with open(hash_to_timestamps_file(video_hash), "w") as fp:
-            json.dump(list_of_timestamp, fp)
+            json.dump(messages_timestamps, fp)
+
+        if len(emoticons_timestamps):
+            # Sort by frequency
+            emoticons_timestamps = dict(reversed(sorted(emoticons_timestamps.items(), key=lambda x: len(x[1]))))
+
+            with open(hash_to_emoticons_file(video_hash), "w") as fp:
+                json.dump(emoticons_timestamps, fp)
 
     hashes_string = ",".join(hashes)
 

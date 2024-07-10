@@ -25,6 +25,10 @@ def hash_to_timestamps_file(video_hash: str) -> str:
     return f"data/{video_hash}_timestamps.json"
 
 
+def hash_to_emoticons_file(video_hash: str) -> str:
+    return f"data/{video_hash}_emoticons.json"
+
+
 # https://stackoverflow.com/questions/7160737/how-to-validate-a-url-in-python-malformed-or-not
 def is_http_url(url):
     try:
@@ -139,3 +143,28 @@ def humanize_timedelta(total_seconds: int | timedelta) -> str:
     minutes, seconds = divmod(remainder, 60)
 
     return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+
+
+def get_custom_emoticons() -> set[str]:
+    try:
+        with open("emoticons.txt", "r") as fp:
+            emoticons = [line.rstrip() for line in fp]
+    except FileNotFoundError:
+        emoticons = []
+
+    emoticons = filter(None, emoticons)
+
+    return set(emoticons)
+
+
+def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: set[str]) -> set:
+    emoticons = list(map(lambda x: x["name"], platform_emotes)) + list(custom_emoticons)
+
+    # TODO Use YouTube's "shortcuts" for aliases of an emote
+
+    result = set()
+    for word in message.split(" "):
+        if word in emoticons:
+            result.add(word)
+
+    return result

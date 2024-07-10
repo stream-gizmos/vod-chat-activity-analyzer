@@ -4,15 +4,12 @@ RUN <<EOT
 set -ex
 python -m ensurepip --upgrade
 python -m pip install --upgrade pip setuptools
-EOT
 
-WORKDIR /var/app/
-
-RUN <<EOT
-set -ex
 apt update -y
 apt install -y git
 EOT
+
+WORKDIR /var/app/
 
 COPY requirements.txt .
 
