@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim as packages
 
 RUN <<EOT
 set -ex
@@ -8,12 +8,26 @@ EOT
 
 WORKDIR /var/app/
 
+RUN <<EOT
+set -ex
+apt update -y
+apt install -y git
+EOT
+
 COPY requirements.txt .
 
 RUN <<EOT
 set -ex
 pip install -r requirements.txt
 EOT
+
+
+
+FROM python:3.11-slim
+
+COPY --from=packages /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+WORKDIR /var/app/
 
 COPY . .
 
