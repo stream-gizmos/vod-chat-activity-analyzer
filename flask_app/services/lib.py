@@ -42,12 +42,12 @@ def is_http_url(url):
         return False
 
 
-def read_emoticons_timestamps(file_path) -> dict[str, list[int]]:
+def read_json_file(file_path):
     try:
         with open(file_path, "r") as fp:
             return json.load(fp)
     except FileNotFoundError:
-        return {}
+        return None
 
 
 def build_dataframe_by_timestamp(data):

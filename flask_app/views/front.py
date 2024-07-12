@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, get_custom_emoticons, \
     hash_to_chat_file, hash_to_emoticons_file, hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, \
     mine_emoticons, normalize_timeline, url_to_hash, build_emoticons_dataframe, build_bar_fig, \
-    read_emoticons_timestamps, ANY_EMOTE
+    read_json_file, ANY_EMOTE
 
 front_bp = Blueprint('front', __name__)
 
@@ -100,7 +100,7 @@ def display_graph(video_hashes):
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"graph{i:02d}_1"] = dict(url=meta["url"], json=graph_json)
 
-        emoticons = read_emoticons_timestamps(hash_to_emoticons_file(video_hash))
+        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
         emoticons_df = build_emoticons_dataframe(emoticons, time_step * 12, top_size=8)
 
         if len(emoticons_df) > 0:
