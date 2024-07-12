@@ -5,8 +5,20 @@ import plotly
 from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, hash_to_chat_file, \
-    hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, normalize_timeline, url_to_hash
+from flask_app.services.lib import (
+    build_dataframe_by_timestamp,
+    build_emoticons_figure,
+    build_messages_figure,
+    get_custom_emoticons,
+    hash_to_chat_file,
+    hash_to_emoticons_file,
+    hash_to_meta_file,
+    hash_to_timestamps_file,
+    is_http_url,
+    mine_emoticons,
+    read_json_file,
+    url_to_hash,
+)
 
 front_bp = Blueprint('front', __name__)
 
@@ -30,6 +42,8 @@ def start_download():
     if not len(urls):
         return redirect(url_for(".index", error="Wrong URLs provided"))
 
+    custom_emoticons = get_custom_emoticons()
+
     hashes = []
     for url in sorted(urls):
         video_hash = url_to_hash(url)
@@ -43,15 +57,27 @@ def start_download():
 
         chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash))
 
-        list_of_timestamp = []
+        messages_timestamps = []
+        emoticons_timestamps: dict[str, list[int]] = {}
         for message in chat:
             if message["time_in_seconds"] < 0:
                 continue
 
-            list_of_timestamp.append(message["timestamp"])
+            messages_timestamps.append(message["timestamp"])
+
+            message_emotes = mine_emoticons(message["message"], message.get("emotes", []), custom_emoticons)
+            for emoticon in message_emotes:
+                if emoticon not in emoticons_timestamps:
+                    emoticons_timestamps[emoticon] = []
+
+                emoticons_timestamps[emoticon].append(message["timestamp"])
 
         with open(hash_to_timestamps_file(video_hash), "w") as fp:
-            json.dump(list_of_timestamp, fp)
+            json.dump(messages_timestamps, fp)
+
+        if len(emoticons_timestamps):
+            with open(hash_to_emoticons_file(video_hash), "w") as fp:
+                json.dump(emoticons_timestamps, fp)
 
     hashes_string = ",".join(hashes)
 
@@ -65,31 +91,43 @@ def display_graph(video_hashes):
     time_step = 5
     rolling_windows = [f"{3 * time_step}s", f"{12 * time_step}s", f"{60 * time_step}s"]
 
-    combined_df: pd.DataFrame | None = None
+    combined_messages_df: pd.DataFrame | None = None
+    combined_emoticons: dict[str, list[int]] = {}
 
     graphs = {}
     for i, video_hash in enumerate(video_hashes, start=1):
-        with open(hash_to_meta_file(video_hash), "r") as fp:
-            meta = json.load(fp)
-        with open(hash_to_timestamps_file(video_hash), "r") as fp:
-            data = json.load(fp)
+        meta = read_json_file(hash_to_meta_file(video_hash)) or {}
 
-        df = build_dataframe_by_timestamp(data)
-        combined_df = df.copy() if combined_df is None else combined_df.add(df, fill_value=0)
+        messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
+        messages_df = build_dataframe_by_timestamp(messages)
 
-        df = normalize_timeline(df, time_step)
-        rolling_dataframes = make_buckets(df, rolling_windows)
+        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
 
-        fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Video time (in minutes)")
-        graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{i:02d}"] = dict(url=meta["url"], json=graph_json)
+        combined_messages_df = messages_df.copy() if combined_messages_df is None \
+            else combined_messages_df.add(messages_df, fill_value=0)
 
-    if len(video_hashes) > 1 and combined_df is not None:
-        combined_df = normalize_timeline(combined_df, time_step)
-        rolling_dataframes = make_buckets(combined_df, rolling_windows)
+        for emote, emoticon_times in emoticons.items():
+            combined_emoticons[emote] = emoticon_times if emote not in combined_emoticons \
+                else combined_emoticons[emote].extend(emoticon_times)
 
-        fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Stream time (in minutes)")
-        graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
+        messages_fig = build_messages_figure(messages_df, rolling_windows, time_step)
+        graph_json = json.dumps(messages_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graphs[f"graph{i:02d}_1"] = dict(url=meta["url"], json=graph_json)
+
+        emoticons_fig = build_emoticons_figure(emoticons, time_step)
+        if emoticons_fig is not None:
+            graph_json = json.dumps(emoticons_fig, cls=plotly.utils.PlotlyJSONEncoder)
+            graphs[f"graph{i:02d}_2"] = dict(url=meta["url"], json=graph_json)
+
+    if len(video_hashes) > 1 and combined_messages_df is not None:
+        messages_fig = build_messages_figure(combined_messages_df, rolling_windows, time_step)
+        graph_json = json.dumps(messages_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graphs[f"graph{0:02d}_1"] = dict(caption='Combined stream stats', json=graph_json)
+
+    if len(video_hashes) > 1:
+        emoticons_fig = build_emoticons_figure(combined_emoticons, time_step)
+        if emoticons_fig is not None:
+            graph_json = json.dumps(emoticons_fig, cls=plotly.utils.PlotlyJSONEncoder)
+            graphs[f"graph{0:02d}_2"] = dict(caption='Combined stream stats', json=graph_json)
 
     return render_template("graph.html", graphs=graphs)

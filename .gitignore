@@ -2,3 +2,4 @@
 /dist/
 .env
 compose.override.yaml
+emoticons.txt

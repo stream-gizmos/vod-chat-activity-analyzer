@@ -1,4 +1,4 @@
-chat-downloader==0.2.8
+git+https://github.com/stream-gizmos/chat-downloader.git@bugfix/twitch-utf8-emote-location
 flask==2.3.2
 gunicorn==21.2.0
 numpy==1.24.2
