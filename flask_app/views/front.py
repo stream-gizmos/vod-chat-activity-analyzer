@@ -82,6 +82,7 @@ def display_graph(video_hashes):
     rolling_windows = [f"{3 * time_step}s", f"{12 * time_step}s", f"{60 * time_step}s"]
 
     combined_df: pd.DataFrame | None = None
+    combined_emoticons: dict[str, list[int]] = {}
 
     graphs = {}
     for i, video_hash in enumerate(video_hashes, start=1):
@@ -101,6 +102,11 @@ def display_graph(video_hashes):
         graphs[f"graph{i:02d}_1"] = dict(url=meta["url"], json=graph_json)
 
         emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
+
+        for emote, emoticon_times in emoticons.items():
+            combined_emoticons[emote] = emoticon_times if emote not in combined_emoticons \
+                else combined_emoticons[emote].extend(emoticon_times)
+
         emoticons_df = build_emoticons_dataframe(emoticons, time_step * 12, top_size=8)
 
         if len(emoticons_df) > 0:
@@ -118,6 +124,18 @@ def display_graph(video_hashes):
 
         fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Stream time (in minutes)")
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
+        graphs[f"graph{0:02d}_1"] = dict(caption='Combined stream stats', json=graph_json)
+
+    if len(video_hashes) > 1:
+        combined_emoticons_df = build_emoticons_dataframe(combined_emoticons, time_step * 12, top_size=8)
+
+        if len(combined_emoticons_df) > 0:
+            fig = build_bar_fig(combined_emoticons_df, time_step * 12, "Number of emoticons", "Video time (in minutes)")
+
+            if len(combined_emoticons_df) > 1:
+                fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
+
+            graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            graphs[f"graph{0:02d}_2"] = dict(caption='Combined stream stats', json=graph_json)
 
     return render_template("graph.html", graphs=graphs)
