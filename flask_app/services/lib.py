@@ -83,17 +83,14 @@ def build_emoticons_dataframe(
         min_occurrences: int = 5,
         top_size: int = 6,
 ) -> dict[str, pd.DataFrame]:
-    all_emotes = [ts for emote_times in emoticons_timestamps.values() for ts in emote_times]
-    all_emotes = sorted(all_emotes)
+    # Count all emotes
+    emoticons_timestamps[ANY_EMOTE] = [ts for emote_times in emoticons_timestamps.values() for ts in emote_times]
+    emoticons_timestamps[ANY_EMOTE] = sorted(emoticons_timestamps[ANY_EMOTE])
 
     # Discard rare emotes
     emoticons_timestamps = {k: v for k, v in emoticons_timestamps.items() if len(v) >= min_occurrences}
     # Sort by frequency
     emoticons_timestamps = dict(reversed(sorted(emoticons_timestamps.items(), key=lambda x: len(x[1]))))
-    # Get N-top emotes
-    emoticons_timestamps = {k: v for k, v in islice(emoticons_timestamps.items(), top_size - 1)}
-
-    emoticons_timestamps[ANY_EMOTE] = all_emotes
 
     result = dict[str, pd.DataFrame]()
     for emote, timestamps in emoticons_timestamps.items():
@@ -105,6 +102,9 @@ def build_emoticons_dataframe(
 
         if len(emote_df) > 0:
             result[emote] = emote_df
+
+    # Get N-top emotes
+    result = {k: v for k, v in islice(result.items(), top_size)}
 
     return result
 
