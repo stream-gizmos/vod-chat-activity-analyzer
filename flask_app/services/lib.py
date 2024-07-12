@@ -71,21 +71,33 @@ def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: in
     if not len(rolling_dataframes):
         return fig
 
-    any_key = next(iter(rolling_dataframes))
-    points_count = len(rolling_dataframes[any_key])
-    start_timestamp: datetime = rolling_dataframes[any_key].index[0].to_pydatetime()
-
     for line_name, df in rolling_dataframes.items():
         df["timestamp"] = df.index
         df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
         df.set_index("timedelta", inplace=True)
 
         fig.add_trace(go.Scatter(
+            name=line_name,
             x=df.index.map(humanize_timedelta),
             y=df["messages"],
             mode="lines",
-            name=line_name,
         ))
+
+    fig = _standard_figure_layout(fig, rolling_dataframes, time_step, figure_title, xaxis_title)
+
+    return fig
+
+
+def _standard_figure_layout(
+        fig,
+        rolling_dataframes: dict[str, pd.DataFrame],
+        time_step: int,
+        figure_title: str,
+        xaxis_title: str,
+):
+    any_key = next(iter(rolling_dataframes))
+    points_count = len(rolling_dataframes[any_key])
+    start_timestamp: datetime = rolling_dataframes[any_key]["timestamp"][0].to_pydatetime()
 
     xaxis_captions, xaxis_captions_detailed = build_timedelta_axis_captions(start_timestamp, points_count, time_step)
 
