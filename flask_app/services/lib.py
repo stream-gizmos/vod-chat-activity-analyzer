@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 
 IntervalWindow = TypeVar('IntervalWindow', str, int)
 
+ANY_EMOTE = 'ANY EMOTE'
+
 
 def url_to_hash(url: str) -> str:
     return md5(url.encode("utf-8")).hexdigest()
@@ -81,24 +83,28 @@ def build_emoticons_dataframe(
         min_occurrences: int = 5,
         top_size: int = 6,
 ) -> dict[str, pd.DataFrame]:
+    all_emotes = [ts for emote_times in emoticons_timestamps.values() for ts in emote_times]
+    all_emotes = sorted(all_emotes)
+
     # Discard rare emotes
     emoticons_timestamps = {k: v for k, v in emoticons_timestamps.items() if len(v) >= min_occurrences}
     # Sort by frequency
     emoticons_timestamps = dict(reversed(sorted(emoticons_timestamps.items(), key=lambda x: len(x[1]))))
     # Get N-top emotes
-    emoticons_timestamps = {k: v for k, v in islice(emoticons_timestamps.items(), top_size)}
+    emoticons_timestamps = {k: v for k, v in islice(emoticons_timestamps.items(), top_size - 1)}
+
+    emoticons_timestamps[ANY_EMOTE] = all_emotes
 
     result = dict[str, pd.DataFrame]()
     for emote, timestamps in emoticons_timestamps.items():
         emote_df = build_dataframe_by_timestamp(timestamps)
         emote_df = normalize_timeline(emote_df, time_step)
         emote_df = emote_df[emote_df["messages"] >= min_occurrences]
+        # TODO Remove when all graphs will be render as subplots
         emote_df = normalize_timeline(emote_df, time_step)
 
         if len(emote_df) > 0:
             result[emote] = emote_df
-
-    # TODO Count ALL emotes
 
     return result
 
