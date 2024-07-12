@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 
 from flask_app.services.lib import build_dataframe_by_timestamp, build_scatter_fig, get_custom_emoticons, \
     hash_to_chat_file, hash_to_emoticons_file, hash_to_meta_file, hash_to_timestamps_file, is_http_url, make_buckets, \
-    mine_emoticons, normalize_timeline, url_to_hash
+    mine_emoticons, normalize_timeline, url_to_hash, build_emoticons_dataframe, build_bar_fig, read_emoticons_timestamps
 
 front_bp = Blueprint('front', __name__)
 
@@ -65,9 +65,6 @@ def start_download():
             json.dump(messages_timestamps, fp)
 
         if len(emoticons_timestamps):
-            # Sort by frequency
-            emoticons_timestamps = dict(reversed(sorted(emoticons_timestamps.items(), key=lambda x: len(x[1]))))
-
             with open(hash_to_emoticons_file(video_hash), "w") as fp:
                 json.dump(emoticons_timestamps, fp)
 
@@ -100,7 +97,15 @@ def display_graph(video_hashes):
 
         fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Video time (in minutes)")
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{i:02d}"] = dict(url=meta["url"], json=graph_json)
+        graphs[f"graph{i:02d}_1"] = dict(url=meta["url"], json=graph_json)
+
+        emoticons: dict[str, list[int]] = read_emoticons_timestamps(hash_to_emoticons_file(video_hash))
+        emoticons_df = build_emoticons_dataframe(emoticons, time_step * 12, top_size=8)
+
+        if len(emoticons_df) > 0:
+            fig = build_bar_fig(emoticons_df, time_step * 12, "Number of emoticons", "Video time (in minutes)")
+            graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            graphs[f"graph{i:02d}_2"] = dict(url=meta["url"], json=graph_json)
 
     if len(video_hashes) > 1 and combined_df is not None:
         combined_df = normalize_timeline(combined_df, time_step)

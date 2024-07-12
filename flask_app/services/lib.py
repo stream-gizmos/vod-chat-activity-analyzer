@@ -1,5 +1,7 @@
+import json
 from datetime import timedelta, datetime
 from hashlib import md5
+from itertools import islice
 from typing import TypeVar
 from urllib.parse import urlparse
 
@@ -38,6 +40,14 @@ def is_http_url(url):
         return False
 
 
+def read_emoticons_timestamps(file_path) -> dict[str, list[int]]:
+    try:
+        with open(file_path, "r") as fp:
+            return json.load(fp)
+    except FileNotFoundError:
+        return {}
+
+
 def build_dataframe_by_timestamp(data):
     df = pd.DataFrame(data, columns=["timestamp"])
 
@@ -52,7 +62,7 @@ def build_dataframe_by_timestamp(data):
 
 
 def normalize_timeline(df: pd.DataFrame, time_step: int) -> pd.DataFrame:
-    # Resample the data into 5 second bins, filling in any missing seconds with 0
+    # Resample the data into N second bins, filling in any missing seconds with 0
     return df.resample(f"{time_step}s").sum()
 
 
@@ -63,6 +73,57 @@ def make_buckets(df: pd.DataFrame, windows: list[IntervalWindow]) -> dict[Interv
         result[interval] = df_resampled
 
     return result
+
+
+def build_emoticons_dataframe(
+        emoticons_timestamps: dict[str, list[int]],
+        time_step: int,
+        min_occurrences: int = 5,
+        top_size: int = 6,
+) -> dict[str, pd.DataFrame]:
+    # Discard rare emotes
+    emoticons_timestamps = {k: v for k, v in emoticons_timestamps.items() if len(v) >= min_occurrences}
+    # Sort by frequency
+    emoticons_timestamps = dict(reversed(sorted(emoticons_timestamps.items(), key=lambda x: len(x[1]))))
+    # Get N-top emotes
+    emoticons_timestamps = {k: v for k, v in islice(emoticons_timestamps.items(), top_size)}
+
+    result = dict[str, pd.DataFrame]()
+    for emote, timestamps in emoticons_timestamps.items():
+        emote_df = build_dataframe_by_timestamp(timestamps)
+        emote_df = normalize_timeline(emote_df, time_step)
+        emote_df = emote_df[emote_df["messages"] >= min_occurrences]
+        emote_df = normalize_timeline(emote_df, time_step)
+
+        if len(emote_df) > 0:
+            result[emote] = emote_df
+
+    # TODO Count ALL emotes
+
+    return result
+
+
+def build_bar_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
+    fig = go.Figure()
+
+    if not len(rolling_dataframes):
+        return fig
+
+    for line_name, df in rolling_dataframes.items():
+        df["timestamp"] = df.index
+        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
+        df.set_index("timedelta", inplace=True)
+
+        fig.add_trace(go.Bar(
+            name=line_name,
+            x=df.index.map(humanize_timedelta),
+            y=df["messages"],
+        ))
+
+    fig = _standard_figure_layout(fig, rolling_dataframes, time_step, figure_title, xaxis_title)
+    fig.update_layout(barmode="stack")
+
+    return fig
 
 
 def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
