@@ -105,7 +105,9 @@ def display_graph(video_hashes):
 
         if len(emoticons_df) > 0:
             fig = build_bar_fig(emoticons_df, time_step * 12, "Number of emoticons", "Video time (in minutes)")
-            fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
+
+            if len(emoticons_df) > 1:
+                fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
 
             graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             graphs[f"graph{i:02d}_2"] = dict(url=meta["url"], json=graph_json)

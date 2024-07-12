@@ -81,7 +81,7 @@ def build_emoticons_dataframe(
         emoticons_timestamps: dict[str, list[int]],
         time_step: int,
         min_occurrences: int = 5,
-        top_size: int = 6,
+        top_size: int = 5,
 ) -> dict[str, pd.DataFrame]:
     # Count all emotes
     emoticons_timestamps[ANY_EMOTE] = [ts for emote_times in emoticons_timestamps.values() for ts in emote_times]
@@ -232,6 +232,8 @@ def get_custom_emoticons() -> set[str]:
         emoticons = []
 
     emoticons = filter(None, emoticons)
+    emoticons = map(lambda x: x.strip(), emoticons)
+    emoticons = filter(lambda x: x[:2] != "# ", emoticons)
 
     return set(emoticons)
 
