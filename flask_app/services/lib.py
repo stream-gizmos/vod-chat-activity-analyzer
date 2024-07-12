@@ -96,12 +96,7 @@ def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: 
 
     # TODO Use YouTube's "shortcuts" for aliases of an emote
 
-    result = set()
-    for word in message.split(" "):
-        if word in emoticons:
-            result.add(word)
-
-    return result
+    return {word for word in message.split(" ") if word in emoticons}
 
 
 def build_emoticons_dataframe(
@@ -157,29 +152,6 @@ def build_emoticons_figure(emoticons: dict[str, list[int]], time_step: int):
         return fig
 
 
-def build_bar_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
-    fig = go.Figure()
-
-    if not len(rolling_dataframes):
-        return fig
-
-    for line_name, df in rolling_dataframes.items():
-        df["timestamp"] = df.index
-        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
-        df.set_index("timedelta", inplace=True)
-
-        fig.add_trace(go.Bar(
-            name=line_name,
-            x=df.index.map(_humanize_timedelta),
-            y=df["messages"],
-        ))
-
-    fig = _standard_figure_layout(fig, rolling_dataframes, time_step, figure_title, xaxis_title)
-    fig.update_layout(barmode="stack")
-
-    return fig
-
-
 def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
     fig = go.Figure()
 
@@ -199,6 +171,29 @@ def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: in
         ))
 
     fig = _standard_figure_layout(fig, rolling_dataframes, time_step, figure_title, xaxis_title)
+
+    return fig
+
+
+def build_bar_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
+    fig = go.Figure()
+
+    if not len(rolling_dataframes):
+        return fig
+
+    for line_name, df in rolling_dataframes.items():
+        df["timestamp"] = df.index
+        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
+        df.set_index("timedelta", inplace=True)
+
+        fig.add_trace(go.Bar(
+            name=line_name,
+            x=df.index.map(_humanize_timedelta),
+            y=df["messages"],
+        ))
+
+    fig = _standard_figure_layout(fig, rolling_dataframes, time_step, figure_title, xaxis_title)
+    fig.update_layout(barmode="stack")
 
     return fig
 
