@@ -77,6 +77,33 @@ def make_buckets(df: pd.DataFrame, windows: list[IntervalWindow]) -> dict[Interv
     return result
 
 
+def get_custom_emoticons() -> set[str]:
+    try:
+        with open("emoticons.txt", "r") as fp:
+            emoticons = [line.rstrip() for line in fp]
+    except FileNotFoundError:
+        emoticons = []
+
+    emoticons = filter(None, emoticons)
+    emoticons = map(lambda x: x.strip(), emoticons)
+    emoticons = filter(lambda x: x[:2] != "# ", emoticons)
+
+    return set(emoticons)
+
+
+def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: set[str]) -> set:
+    emoticons = list(map(lambda x: x["name"], platform_emotes)) + list(custom_emoticons)
+
+    # TODO Use YouTube's "shortcuts" for aliases of an emote
+
+    result = set()
+    for word in message.split(" "):
+        if word in emoticons:
+            result.add(word)
+
+    return result
+
+
 def build_emoticons_dataframe(
         emoticons_timestamps: dict[str, list[int]],
         time_step: int,
@@ -109,6 +136,27 @@ def build_emoticons_dataframe(
     return result
 
 
+def build_messages_figure(df: pd.DataFrame, rolling_windows: list[IntervalWindow], time_step: int):
+    df = normalize_timeline(df, time_step)
+    rolling_dataframes = make_buckets(df, rolling_windows)
+
+    fig = build_scatter_fig(rolling_dataframes, time_step, "Number of messages", "Video time (in minutes)")
+
+    return fig
+
+
+def build_emoticons_figure(emoticons: dict[str, list[int]], time_step: int):
+    emoticons_df = build_emoticons_dataframe(emoticons, time_step * 12, top_size=8)
+
+    if len(emoticons_df) > 0:
+        fig = build_bar_fig(emoticons_df, time_step * 12, "Number of emoticons", "Video time (in minutes)")
+
+        if len(emoticons_df) > 1:
+            fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
+
+        return fig
+
+
 def build_bar_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, figure_title: str, xaxis_title: str):
     fig = go.Figure()
 
@@ -122,7 +170,7 @@ def build_bar_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: int, f
 
         fig.add_trace(go.Bar(
             name=line_name,
-            x=df.index.map(humanize_timedelta),
+            x=df.index.map(_humanize_timedelta),
             y=df["messages"],
         ))
 
@@ -145,7 +193,7 @@ def build_scatter_fig(rolling_dataframes: dict[str, pd.DataFrame], time_step: in
 
         fig.add_trace(go.Scatter(
             name=line_name,
-            x=df.index.map(humanize_timedelta),
+            x=df.index.map(_humanize_timedelta),
             y=df["messages"],
             mode="lines",
         ))
@@ -166,7 +214,7 @@ def _standard_figure_layout(
     points_count = len(rolling_dataframes[any_key])
     start_timestamp: datetime = rolling_dataframes[any_key]["timestamp"][0].to_pydatetime()
 
-    xaxis_captions, xaxis_captions_detailed = build_timedelta_axis_captions(start_timestamp, points_count, time_step)
+    xaxis_captions, xaxis_captions_detailed = _build_timedelta_axis_captions(start_timestamp, points_count, time_step)
 
     fig.update_layout(
         title=figure_title,
@@ -196,12 +244,12 @@ def _standard_figure_layout(
     return fig
 
 
-def build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, time_step: int):
+def _build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, time_step: int):
     vals = []
     text = []
 
     for x in range(0, points_count, 3600 // time_step):
-        short_caption = humanize_timedelta(x * time_step)
+        short_caption = _humanize_timedelta(x * time_step)
         vals.append(short_caption)
 
         point_timestamp = start_timestamp + timedelta(seconds=x * time_step)
@@ -214,7 +262,7 @@ def build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, 
     return vals, text
 
 
-def humanize_timedelta(total_seconds: int | timedelta) -> str:
+def _humanize_timedelta(total_seconds: int | timedelta) -> str:
     if isinstance(total_seconds, timedelta):
         total_seconds = total_seconds.total_seconds()
 
@@ -222,30 +270,3 @@ def humanize_timedelta(total_seconds: int | timedelta) -> str:
     minutes, seconds = divmod(remainder, 60)
 
     return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
-
-
-def get_custom_emoticons() -> set[str]:
-    try:
-        with open("emoticons.txt", "r") as fp:
-            emoticons = [line.rstrip() for line in fp]
-    except FileNotFoundError:
-        emoticons = []
-
-    emoticons = filter(None, emoticons)
-    emoticons = map(lambda x: x.strip(), emoticons)
-    emoticons = filter(lambda x: x[:2] != "# ", emoticons)
-
-    return set(emoticons)
-
-
-def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: set[str]) -> set:
-    emoticons = list(map(lambda x: x["name"], platform_emotes)) + list(custom_emoticons)
-
-    # TODO Use YouTube's "shortcuts" for aliases of an emote
-
-    result = set()
-    for word in message.split(" "):
-        if word in emoticons:
-            result.add(word)
-
-    return result
