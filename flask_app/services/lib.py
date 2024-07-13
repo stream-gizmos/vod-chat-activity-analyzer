@@ -52,7 +52,7 @@ def read_json_file(file_path):
         return None
 
 
-def build_dataframe_by_timestamp(data):
+def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=["timestamp"])
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, unit="us")
@@ -110,18 +110,19 @@ def build_emoticons_dataframes(
     if not len(emoticons_timestamps):
         return {}
 
-    # TODO Don't write to emoticons_timestamps
+    buffer = {k: v for k, v in emoticons_timestamps.items()}
+
     # Count all emotes
-    emoticons_timestamps[ANY_EMOTE] = [ts for emote_times in emoticons_timestamps.values() for ts in emote_times]
-    emoticons_timestamps[ANY_EMOTE] = sorted(emoticons_timestamps[ANY_EMOTE])
+    buffer[ANY_EMOTE] = [ts for emote_times in buffer.values() for ts in emote_times]
+    buffer[ANY_EMOTE] = sorted(buffer[ANY_EMOTE])
 
     # Discard rare emotes
-    emoticons_timestamps = {k: v for k, v in emoticons_timestamps.items() if len(v) >= min_occurrences}
+    buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
     # Sort by frequency
-    emoticons_timestamps = dict(reversed(sorted(emoticons_timestamps.items(), key=lambda x: len(x[1]))))
+    buffer = dict(reversed(sorted(buffer.items(), key=lambda x: len(x[1]))))
 
-    result = dict[str, pd.DataFrame]()
-    for emote, timestamps in emoticons_timestamps.items():
+    result = {}
+    for emote, timestamps in buffer.items():
         emote_df = build_dataframe_by_timestamp(timestamps)
         emote_df = normalize_timeline(emote_df, time_step)
         emote_df = emote_df[emote_df["messages"] >= min_occurrences]
