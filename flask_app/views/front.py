@@ -90,8 +90,12 @@ def start_download():
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
+    # Size of minimal time step in seconds.
     time_step = 15
     rolling_windows = [f"{1 * time_step}s", f"{4 * time_step}s", f"{20 * time_step}s"]
+    # How many of the time steps is used for emoticons calculations.
+    emoticons_time_multiplier = 4
+    emoticons_top_size = 5
 
     combined_messages_df: pd.DataFrame | None = None
     combined_emoticons: dict[str, list[int]] = {}
@@ -102,17 +106,21 @@ def display_graph(video_hashes):
 
         messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
         messages_df = build_dataframe_by_timestamp(messages)
-
-        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
-        emoticons_dfs = build_emoticons_dataframes(emoticons, time_step * 4, top_size=5)
-
         messages_df = normalize_timeline(messages_df, time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
+
+        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
+        emoticons_dfs = build_emoticons_dataframes(
+            emoticons,
+            time_step * emoticons_time_multiplier,
+            top_size=emoticons_top_size,
+        )
 
         fig = build_multiplot_figure(
             rolling_messages_dfs,
             emoticons_dfs,
             time_step,
+            emoticons_time_multiplier,
             "Video time (in minutes)",
         )
 
@@ -132,12 +140,17 @@ def display_graph(video_hashes):
         messages_df = normalize_timeline(combined_messages_df, time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
-        emoticons_dfs = build_emoticons_dataframes(combined_emoticons, time_step * 4, top_size=5)
+        emoticons_dfs = build_emoticons_dataframes(
+            combined_emoticons,
+            time_step * emoticons_time_multiplier,
+            top_size=emoticons_top_size,
+        )
 
         fig = build_multiplot_figure(
             rolling_messages_dfs,
             emoticons_dfs,
             time_step,
+            emoticons_time_multiplier,
             "Stream time (in minutes)",
         )
 

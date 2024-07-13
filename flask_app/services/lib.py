@@ -145,11 +145,20 @@ def build_messages_figure(df: pd.DataFrame, rolling_windows: list[IntervalWindow
     return fig
 
 
-def build_emoticons_figure(emoticons_timestamps: dict[str, list[int]], time_step: int) -> Figure:
-    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step * 4, top_size=8)
+def build_emoticons_figure(
+        emoticons_timestamps: dict[str, list[int]],
+        time_step: int,
+        time_multiplier: int,
+) -> Figure:
+    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step * time_multiplier, top_size=8)
     emoticons_df = {k: normalize_timeline(v, time_step) for k, v in emoticons_df.items()}
 
-    fig = build_bar_figure(emoticons_df, time_step * 4, "Number of emoticons", "Video time (in minutes)")
+    fig = build_bar_figure(
+        emoticons_df,
+        time_step * time_multiplier,
+        "Number of emoticons",
+        "Video time (in minutes)",
+    )
 
     if len(emoticons_df) > 1:
         fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
@@ -211,6 +220,7 @@ def build_multiplot_figure(
         messages_dfs: dict[IntervalWindow, pd.DataFrame],
         emoticons_dfs: dict[str, pd.DataFrame],
         time_step: int,
+        emoticons_time_multiplier: int,
         xaxis_title: str,
 ) -> Figure:
     messages_row = 1
@@ -231,7 +241,7 @@ def build_multiplot_figure(
     fig.update_xaxes(row=messages_row, rangeslider=dict(visible=True, thickness=.1))
 
     if emoticons_row > 0:
-        append_emoticons_traces(fig, emoticons_dfs, row=emoticons_row, col=1)
+        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_multiplier, row=emoticons_row, col=1)
         fig.update_yaxes(row=emoticons_row, title="Emoticons")
         fig.update_xaxes(row=emoticons_row, title=xaxis_title)
     else:
@@ -266,6 +276,7 @@ def append_messages_traces(
 def append_emoticons_traces(
         fig: Figure,
         emoticons_dfs: dict[str, pd.DataFrame],
+        time_multiplier: int,
         row=None,
         col=None,
 ) -> None:
@@ -281,7 +292,7 @@ def append_emoticons_traces(
             name=line_name,
             x=df.index.map(_humanize_timedelta),
             y=df["messages"],
-            width=4,
+            width=time_multiplier,
             offset=0,
         )
 
