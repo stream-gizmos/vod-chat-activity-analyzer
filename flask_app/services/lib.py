@@ -146,10 +146,10 @@ def build_messages_figure(df: pd.DataFrame, rolling_windows: list[IntervalWindow
 
 
 def build_emoticons_figure(emoticons_timestamps: dict[str, list[int]], time_step: int) -> Figure:
-    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step * 12, top_size=8)
+    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step * 4, top_size=8)
     emoticons_df = {k: normalize_timeline(v, time_step) for k, v in emoticons_df.items()}
 
-    fig = build_bar_figure(emoticons_df, time_step * 12, "Number of emoticons", "Video time (in minutes)")
+    fig = build_bar_figure(emoticons_df, time_step * 4, "Number of emoticons", "Video time (in minutes)")
 
     if len(emoticons_df) > 1:
         fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
@@ -281,7 +281,7 @@ def append_emoticons_traces(
             name=line_name,
             x=df.index.map(_humanize_timedelta),
             y=df["messages"],
-            width=12,
+            width=4,
             offset=0,
         )
 

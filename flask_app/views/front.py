@@ -90,8 +90,8 @@ def start_download():
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
-    time_step = 5
-    rolling_windows = [f"{3 * time_step}s", f"{12 * time_step}s", f"{60 * time_step}s"]
+    time_step = 15
+    rolling_windows = [f"{1 * time_step}s", f"{4 * time_step}s", f"{20 * time_step}s"]
 
     combined_messages_df: pd.DataFrame | None = None
     combined_emoticons: dict[str, list[int]] = {}
@@ -104,7 +104,7 @@ def display_graph(video_hashes):
         messages_df = build_dataframe_by_timestamp(messages)
 
         emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
-        emoticons_dfs = build_emoticons_dataframes(emoticons, time_step * 12, top_size=5)
+        emoticons_dfs = build_emoticons_dataframes(emoticons, time_step * 4, top_size=5)
 
         messages_df = normalize_timeline(messages_df, time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
@@ -132,7 +132,7 @@ def display_graph(video_hashes):
         messages_df = normalize_timeline(combined_messages_df, time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
-        emoticons_dfs = build_emoticons_dataframes(combined_emoticons, time_step * 12, top_size=5)
+        emoticons_dfs = build_emoticons_dataframes(combined_emoticons, time_step * 4, top_size=5)
 
         fig = build_multiplot_figure(
             rolling_messages_dfs,
