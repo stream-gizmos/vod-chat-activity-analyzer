@@ -140,22 +140,23 @@ def build_messages_figure(df: pd.DataFrame, rolling_windows: list[IntervalWindow
     df = normalize_timeline(df, time_step)
     rolling_dataframes = make_buckets(df, rolling_windows)
 
-    fig = build_scatter_figure(rolling_dataframes, time_step, "Number of messages", "Video time (in minutes)")
+    fig = build_scatter_figure(
+        rolling_dataframes,
+        time_step,
+        "Number of messages",
+        "Video time (in minutes)",
+    )
 
     return fig
 
 
-def build_emoticons_figure(
-        emoticons_timestamps: dict[str, list[int]],
-        time_step: int,
-        time_multiplier: int,
-) -> Figure:
-    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step * time_multiplier, top_size=8)
+def build_emoticons_figure(emoticons_timestamps: dict[str, list[int]], time_step: int) -> Figure:
+    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step, top_size=8)
     emoticons_df = {k: normalize_timeline(v, time_step) for k, v in emoticons_df.items()}
 
     fig = build_bar_figure(
         emoticons_df,
-        time_step * time_multiplier,
+        time_step,
         "Number of emoticons",
         "Video time (in minutes)",
     )
