@@ -343,7 +343,8 @@ def _multiplot_figure_layout(
 
     fig.update_layout(
         autosize=True,
-        margin=dict(t=25, b=0, l=0, r=0),  # TODO Fix menu position
+        modebar=dict(orientation="v"),
+        margin=dict(t=0, b=0, l=0, r=130),
         hovermode="x unified",
         barmode="stack",
     )

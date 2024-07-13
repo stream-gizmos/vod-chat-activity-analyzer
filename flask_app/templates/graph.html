@@ -22,10 +22,14 @@
     {% endfor %}
 
     <script>
+        const config = {
+            modeBarButtonsToRemove: ['select', 'lasso2d'],
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             {% for alias, graph_data in graphs.items() %}
                 const {{ alias }} = {{ graph_data.json | safe }}
-                Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout)
+                Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, config)
             {% endfor %}
         });
     </script>
