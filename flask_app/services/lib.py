@@ -93,7 +93,7 @@ def get_custom_emoticons() -> set[str]:
     return set(emoticons)
 
 
-def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: set[str]) -> set:
+def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: set[str]) -> set[str]:
     emoticons = list(map(lambda x: x["name"], platform_emotes)) + list(custom_emoticons)
 
     # TODO Use YouTube's "shortcuts" for aliases of an emote
@@ -257,7 +257,7 @@ def append_messages_traces(
         messages_dfs: dict[IntervalWindow, pd.DataFrame],
         row=None,
         col=None,
-):
+) -> None:
     for line_name, df in messages_dfs.items():
         df["timestamp"] = df.index
         df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
@@ -383,7 +383,10 @@ def _multiplot_figure_layout(
         fig.update_traces(row=l, legend=legend_name)
 
 
-def _build_timedelta_axis_captions(start_timestamp: datetime, points_count: int, time_step: int):
+def _build_timedelta_axis_captions(
+        start_timestamp: datetime,
+        points_count: int, time_step: int,
+) -> tuple[list[str], list[str]]:
     vals = []
     text = []
 
