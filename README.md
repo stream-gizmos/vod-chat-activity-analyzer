@@ -1,33 +1,18 @@
 # VOD Chat Activity Analyzer
 
-<a href="https://ibb.co/Ch5gz26"><img src="https://i.ibb.co/syvn2HC/Screenshot-8.png" alt="Screenshot-8" border="0" width="100%"></a>
-
-## Table of Contents
-- [Project Overview](#Project-Overview)
-- [Features](#features)
-- [Live Deployment](#live-deployment)
-- [Usage](#usage)
-- [Known Limitations](#known-limitations)
-- [Technology Stack](#tech-stack)
-- [Future](#future)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
-
+![screenshot](https://i.imgur.com/7ElycXy.png)
 
 ## Project Overview
 
-Twitch Chat Activity Visualizer, is a web application designed to provide an interactive visualization of activity within a Twitch stream's chat. It allows users to track the pace and volume of messages in a Twitch VOD's chat over time. 
+VOD Chat Activity Analyzer, is a web application designed to provide an interactive visualization of activity within a Twitch and YouTube stream's chat. It allows users to track the pace and volume of messages in a VOD's chat over time. 
 
-The visualizations are particularly useful for streamers who want to understand when their chats are most active. It can help to identify key moments during a stream when viewer engagement is high.
-
-The application is built using Python and Flask, and leverages the chat_downloader library to fetch chat data from Twitch VODs. The visualization itself is created using Plotly and rendered in a web browser.
+The visualizations are particularly useful for streamers who want to understand when their chats are most active. It can help to identify key moments during a stream when viewer engagement is high. This information may help to choose moments for a video highlights, etc.
 
 ## Features
 
-- **Twitch VOD Chat Download**: The application downloads chat history from Twitch VODs using the URL provided by the user. It can handle streams of various sizes, from smaller streams to medium-large streams but not very large streams due to reasons mentioned in the Known Limitations section below.
-- **Interactive Visualization**: The application generates an interactive line graph that plots the number of chat messages over time. The X-axis represents time in minutes since the start of the VOD, and the Y-axis represents the number of messages. 
-- **Rolling Averages**: The line graph displays rolling averages of chat activity for three different time intervals: 15 seconds, 60 seconds, and 5 minutes. This allows users to observe chat activity trends at different granularities.
+- **VOD Chat Download**: The application downloads chat history from Twitch/YouTube VODs using the URL provided by the user.
+- **Interactive Visualization**: The application generates an interactive graphs that plots the number of chat messages/emoticons over time. The X-axis represents time in minutes since the start of the VOD, and the Y-axis represents the metric. 
+- **Rolling Averages**: The line graph displays rolling averages of chat activity for three different time intervals: 15 seconds, 60 seconds, and 5 minutes. This allows users to observe chat activity trends at different granularity.
 
 ## Usage
 
@@ -68,14 +53,6 @@ Due to the limitations of Heroku's 30-second timeout for requests, this applicat
 
 - **Language**: Python 3.11
 - **Web Framework**: Flask 2.3
-- **Chat Data Fetching**: chat-downloader
+- **Chat Data Fetching**: chat-downloader with patches
 - **Data Processing**: pandas 2.0
 - **Visualization**: Plotly 5.15
-
-## Future Work
-
-In future versions of this project, we aim to add more detailed analysis features. These might include:
-
-- **Peak Activity Identification**: Automatically identifying and highlighting moments in the stream with the highest chat activity.
-- **User Participation Statistics**: Showing statistics on individual users' participation in the chat.
-- **Keyword Analysis**: Identifying the most frequently used words or phrases in the chat.
