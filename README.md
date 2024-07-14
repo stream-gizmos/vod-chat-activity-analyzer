@@ -23,9 +23,28 @@ The visualizations are particularly useful for streamers who want to understand 
 3. Run `web_app.py` to start the Flask server.
 4. Visit http://localhost:8080 in your web browser to view the application.
 
-### Bundle Windows EXE
+### User Guide
 
-If the contents of the `chat-analyzer.spec` file are up-to-date, it is sufficient to use a Compose `bundler` service to build the `app.exe` file:
+1. On the homepage, enter the URL of the Twitch VOD whose chat activity you want to analyze.
+2. Click the "Find how fast your chat was!" button. The application will start downloading the chat history and processing it.
+3. Once the data processing is done, you will be redirected to a page that displays the visualization of the chat activity. You can hover over the graph to see the exact number of messages at any given time point.
+
+## Known Limitations
+
+1. The application may not be able to handle extremely active Twitch chats that have thousands of messages per minute. In such cases, the application might timeout before it finishes downloading and processing the chat data. This issue is primarily observed with larger streams that have high chat activity.
+2. The bundled EXE file `chat-analyzer.exe` is not signed, so Microsoft Defender SmartScreen will always warn you about an unrecognized app.
+
+## Technology Stack
+
+- **Language**: Python 3.11
+- **Web Framework**: Flask 2.3
+- **Chat Data Fetching**: chat-downloader with patches
+- **Data Processing**: pandas 2.0
+- **Visualization**: Plotly 5.15
+
+## Bundle Windows EXE
+
+If the contents of the `chat-analyzer.spec` file are up-to-date, it is sufficient to use a Compose `bundler` service to build the `chat-analyzer.exe` file:
 
     docker compose run --rm bundler
 
@@ -38,21 +57,3 @@ Then run the command to update the spec file:
     pyinstaller --name chat-analyzer --onefile --collect-datas chat_downloader.formatting --add-data "flask_app/templates:flask_app/templates" --add-data "flask_app/static:flask_app/static" standalone_app.py
 
 (Optional) If you have changed the application dependencies, it's better to rebuild the `bundler` image to speed up the bundling.
-
-### User Guide
-
-1. On the homepage, enter the URL of the Twitch VOD whose chat activity you want to analyze.
-2. Click the "Find how fast your chat was!" button. The application will start downloading the chat history and processing it.
-3. Once the data processing is done, you will be redirected to a page that displays the visualization of the chat activity. You can hover over the graph to see the exact number of messages at any given time point.
-
-## Known Limitations
-
-Due to the limitations of Heroku's 30-second timeout for requests, this application may not be able to handle extremely active Twitch chats that have thousands of messages per minute. In such cases, the application might timeout before it finishes downloading and processing the chat data. This issue is primarily observed with larger streams that have high chat activity. I am actively exploring solutions to address this limitation in future versions of the application.
-
-## Technology Stack
-
-- **Language**: Python 3.11
-- **Web Framework**: Flask 2.3
-- **Chat Data Fetching**: chat-downloader with patches
-- **Data Processing**: pandas 2.0
-- **Visualization**: Plotly 5.15
