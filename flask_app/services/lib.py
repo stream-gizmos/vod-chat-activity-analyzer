@@ -136,87 +136,6 @@ def build_emoticons_dataframes(
     return result
 
 
-def build_messages_figure(df: pd.DataFrame, rolling_windows: list[IntervalWindow], time_step: int) -> Figure:
-    df = normalize_timeline(df, time_step)
-    rolling_dataframes = make_buckets(df, rolling_windows)
-
-    fig = build_scatter_figure(
-        rolling_dataframes,
-        time_step,
-        "Number of messages",
-        "Video time (in minutes)",
-    )
-
-    return fig
-
-
-def build_emoticons_figure(emoticons_timestamps: dict[str, list[int]], time_step: int) -> Figure:
-    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step, top_size=8)
-    emoticons_df = {k: normalize_timeline(v, time_step) for k, v in emoticons_df.items()}
-
-    fig = build_bar_figure(
-        emoticons_df,
-        time_step,
-        "Number of emoticons",
-        "Video time (in minutes)",
-    )
-
-    if len(emoticons_df) > 1:
-        fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
-
-    return fig
-
-
-def build_scatter_figure(
-        dfs: dict[str, pd.DataFrame],
-        time_step: int,
-        figure_title: str,
-        xaxis_title: str,
-) -> Figure:
-    fig = go.Figure()
-
-    for line_name, df in dfs.items():
-        df["timestamp"] = df.index
-        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
-        df.set_index("timedelta", inplace=True)
-
-        fig.add_trace(go.Scatter(
-            name=line_name,
-            x=df.index.map(_humanize_timedelta),
-            y=df["messages"],
-            mode="lines",
-        ))
-
-    _standard_figure_layout(fig, dfs, time_step, figure_title, xaxis_title)
-
-    return fig
-
-
-def build_bar_figure(
-        dfs: dict[str, pd.DataFrame],
-        time_step: int,
-        figure_title: str,
-        xaxis_title: str,
-) -> Figure:
-    fig = go.Figure()
-
-    for line_name, df in dfs.items():
-        df["timestamp"] = df.index
-        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
-        df.set_index("timedelta", inplace=True)
-
-        fig.add_trace(go.Bar(
-            name=line_name,
-            x=df.index.map(_humanize_timedelta),
-            y=df["messages"],
-        ))
-
-    _standard_figure_layout(fig, dfs, time_step, figure_title, xaxis_title)
-    fig.update_layout(barmode="stack")
-
-    return fig
-
-
 def build_multiplot_figure(
         messages_dfs: dict[IntervalWindow, pd.DataFrame],
         emoticons_dfs: dict[str, pd.DataFrame],
@@ -301,45 +220,6 @@ def append_emoticons_traces(
             trace.update(dict(visible="legendonly"))
 
         fig.add_trace(trace, row=row, col=col)
-
-
-def _standard_figure_layout(
-        fig: Figure,
-        rolling_dataframes: dict[str, pd.DataFrame],
-        time_step: int,
-        figure_title: str,
-        xaxis_title: str,
-) -> None:
-    any_key = next(iter(rolling_dataframes))
-    points_count = len(rolling_dataframes[any_key])
-    start_timestamp: datetime = rolling_dataframes[any_key]["timestamp"][0].to_pydatetime()
-
-    xaxis_captions, xaxis_captions_detailed = _build_timedelta_axis_captions(start_timestamp, points_count, time_step)
-
-    fig.update_layout(
-        title=figure_title,
-        autosize=True,
-        height=330,
-        margin=dict(t=30, b=0, l=0, r=0, pad=5),
-        hovermode="x unified",
-        xaxis_title=xaxis_title,
-        xaxis=dict(
-            type='category',
-
-            tickmode='array',
-            tickvals=xaxis_captions,
-            ticktext=xaxis_captions_detailed,
-            tickfont_size=11,
-            ticklabelposition="outside right",
-            autotickangles=[0, 60, 90],
-
-            range=[0, min((3600 // time_step) * 3, points_count)],
-            rangeslider_visible=True,
-        ),
-        yaxis=dict(
-            fixedrange=True,
-        ),
-    )
 
 
 def _multiplot_figure_layout(
