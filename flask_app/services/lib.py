@@ -413,7 +413,8 @@ def _humanize_timedelta(total_seconds: int | timedelta) -> str:
     if isinstance(total_seconds, timedelta):
         total_seconds = total_seconds.total_seconds()
 
-    hours, remainder = divmod(total_seconds, 3600)
+    sign = '-' if total_seconds < 0 else ''
+    hours, remainder = divmod(abs(total_seconds), 3600)
     minutes, seconds = divmod(remainder, 60)
 
-    return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+    return f'{sign}{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
