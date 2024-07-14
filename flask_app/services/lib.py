@@ -161,7 +161,7 @@ def build_multiplot_figure(
     fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1))
 
     if emoticons_row > 0:
-        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_multiplier, row=emoticons_row, col=1)
+        append_emoticons_traces(fig, emoticons_dfs, time_step * emoticons_time_multiplier, row=emoticons_row, col=1)
         fig.update_yaxes(row=emoticons_row, title="Emoticons")
         fig.update_xaxes(row=emoticons_row, title=xaxis_title)
     else:
@@ -185,7 +185,7 @@ def append_messages_traces(
 
         trace = go.Scatter(
             name=line_name,
-            x=df.index.map(_humanize_timedelta),
+            x=df.index,
             y=df["messages"],
             mode="lines",
         )
@@ -196,7 +196,7 @@ def append_messages_traces(
 def append_emoticons_traces(
         fig: Figure,
         emoticons_dfs: dict[str, pd.DataFrame],
-        time_multiplier: int,
+        time_step: int,
         row=None,
         col=None,
 ) -> None:
@@ -210,9 +210,9 @@ def append_emoticons_traces(
 
         trace = go.Bar(
             name=line_name,
-            x=df.index.map(_humanize_timedelta),
+            x=df.index,
             y=df["messages"],
-            width=time_multiplier,
+            width=time_step,
             offset=0,
         )
 
@@ -227,11 +227,9 @@ def _multiplot_figure_layout(
         rolling_dataframes: dict[str, pd.DataFrame],
         time_step: int,
 ) -> None:
-    any_key = next(iter(rolling_dataframes))
-    points_count = len(rolling_dataframes[any_key])
-    start_timestamp: datetime = rolling_dataframes[any_key]["timestamp"][0].to_pydatetime()
-
-    xaxis_captions, xaxis_captions_detailed = _build_timedelta_axis_captions(start_timestamp, points_count, time_step)
+    # Link all traces to one single X axis.
+    total_yaxes = len(list(fig.select_yaxes()))
+    fig.update_traces(xaxis=f"x{total_yaxes}")
 
     fig.update_layout(
         autosize=True,
@@ -242,23 +240,36 @@ def _multiplot_figure_layout(
         barmode="stack",
     )
 
-    fig.update_yaxes(fixedrange=True)
+    # TODO Move this block outside
+    any_df_key = next(iter(rolling_dataframes))
+    any_df = rolling_dataframes[any_df_key]
+    points_count = len(any_df)
+    start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()
+    xaxis_aliases = _build_time_axis_aliases(start_timestamp, points_count, time_step)
 
     fig.update_xaxes(
-        type='category',
+        type="linear",
+        minallowed=-time_step,
+        maxallowed=points_count * time_step,
 
-        tickmode='array',
-        tickvals=xaxis_captions,
-        ticktext=xaxis_captions_detailed,
+        tickmode="linear",
+        tick0=0,
+        dtick=3600,
+        labelalias=xaxis_aliases,
+        tickformat="d",
+        showgrid=True,
+
         tickfont_size=11,
         ticklabelposition="outside right",
         autotickangles=[0, 60, 90],
 
-        range=[0, min((3600 // time_step) * 3, points_count)],
+        range=[0, min(3600 * 3, points_count * time_step)],
     )
 
-    total_yaxes = len(list(fig.select_yaxes()))
-    fig.update_traces(xaxis=f"x{total_yaxes}")
+    fig.update_yaxes(
+        minallowed=0,
+        fixedrange=True,
+    )
 
     # Uncluster legends of traces of each shape.
     # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
@@ -268,25 +279,26 @@ def _multiplot_figure_layout(
         fig.update_traces(row=l, legend=legend_name)
 
 
-def _build_timedelta_axis_captions(
+def _build_time_axis_aliases(
         start_timestamp: datetime,
-        points_count: int, time_step: int,
-) -> tuple[list[str], list[str]]:
-    vals = []
-    text = []
+        points_count: int,
+        time_step: int,
+) -> dict[int, str]:
+    result = {}
+    for seconds in range(0, points_count * time_step, time_step):
+        text = short_caption = _humanize_timedelta(seconds)
 
-    for x in range(0, points_count, 3600 // time_step):
-        short_caption = _humanize_timedelta(x * time_step)
-        vals.append(short_caption)
+        if seconds % 3600 == 0:
+            point_timestamp = start_timestamp + timedelta(seconds=seconds)
+            text = (
+                f"{short_caption}<br>" +
+                f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
+                f"{point_timestamp.strftime('%H:%M:%S')}"
+            )
 
-        point_timestamp = start_timestamp + timedelta(seconds=x * time_step)
-        text.append(
-            f"{short_caption}<br>" +
-            f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
-            f"{point_timestamp.strftime('%H:%M:%S')}"
-        )
+        result[seconds] = text
 
-    return vals, text
+    return result
 
 
 def _humanize_timedelta(total_seconds: int | timedelta) -> str:
