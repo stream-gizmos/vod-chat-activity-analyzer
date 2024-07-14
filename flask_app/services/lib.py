@@ -136,92 +136,11 @@ def build_emoticons_dataframes(
     return result
 
 
-def build_messages_figure(df: pd.DataFrame, rolling_windows: list[IntervalWindow], time_step: int) -> Figure:
-    df = normalize_timeline(df, time_step)
-    rolling_dataframes = make_buckets(df, rolling_windows)
-
-    fig = build_scatter_figure(
-        rolling_dataframes,
-        time_step,
-        "Number of messages",
-        "Video time (in minutes)",
-    )
-
-    return fig
-
-
-def build_emoticons_figure(emoticons_timestamps: dict[str, list[int]], time_step: int) -> Figure:
-    emoticons_df = build_emoticons_dataframes(emoticons_timestamps, time_step, top_size=8)
-    emoticons_df = {k: normalize_timeline(v, time_step) for k, v in emoticons_df.items()}
-
-    fig = build_bar_figure(
-        emoticons_df,
-        time_step,
-        "Number of emoticons",
-        "Video time (in minutes)",
-    )
-
-    if len(emoticons_df) > 1:
-        fig.update_traces(dict(visible="legendonly"), dict(name=ANY_EMOTE))
-
-    return fig
-
-
-def build_scatter_figure(
-        dfs: dict[str, pd.DataFrame],
-        time_step: int,
-        figure_title: str,
-        xaxis_title: str,
-) -> Figure:
-    fig = go.Figure()
-
-    for line_name, df in dfs.items():
-        df["timestamp"] = df.index
-        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
-        df.set_index("timedelta", inplace=True)
-
-        fig.add_trace(go.Scatter(
-            name=line_name,
-            x=df.index.map(_humanize_timedelta),
-            y=df["messages"],
-            mode="lines",
-        ))
-
-    _standard_figure_layout(fig, dfs, time_step, figure_title, xaxis_title)
-
-    return fig
-
-
-def build_bar_figure(
-        dfs: dict[str, pd.DataFrame],
-        time_step: int,
-        figure_title: str,
-        xaxis_title: str,
-) -> Figure:
-    fig = go.Figure()
-
-    for line_name, df in dfs.items():
-        df["timestamp"] = df.index
-        df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
-        df.set_index("timedelta", inplace=True)
-
-        fig.add_trace(go.Bar(
-            name=line_name,
-            x=df.index.map(_humanize_timedelta),
-            y=df["messages"],
-        ))
-
-    _standard_figure_layout(fig, dfs, time_step, figure_title, xaxis_title)
-    fig.update_layout(barmode="stack")
-
-    return fig
-
-
 def build_multiplot_figure(
         messages_dfs: dict[IntervalWindow, pd.DataFrame],
+        messages_time_step: int,
         emoticons_dfs: dict[str, pd.DataFrame],
-        time_step: int,
-        emoticons_time_multiplier: int,
+        emoticons_time_step: int,
         xaxis_title: str,
 ) -> Figure:
     messages_row = 1
@@ -234,21 +153,27 @@ def build_multiplot_figure(
         cols=1,
         shared_xaxes=True,
         row_heights=row_heights,
-        vertical_spacing=.2,
+        vertical_spacing=.02,
     )
 
     append_messages_traces(fig, messages_dfs, row=messages_row, col=1)
     fig.update_yaxes(row=messages_row, title="Messages")
-    fig.update_xaxes(row=messages_row, rangeslider=dict(visible=True, thickness=.1))
+    fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1))
 
     if emoticons_row > 0:
-        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_multiplier, row=emoticons_row, col=1)
+        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_step, row=emoticons_row, col=1)
         fig.update_yaxes(row=emoticons_row, title="Emoticons")
         fig.update_xaxes(row=emoticons_row, title=xaxis_title)
     else:
         fig.update_xaxes(row=messages_row, title=xaxis_title)
 
-    _multiplot_figure_layout(fig, messages_dfs, time_step)
+    any_df_key = next(iter(messages_dfs))
+    any_df = messages_dfs[any_df_key]
+    start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()
+    points_count = len(any_df)
+    min_time_step = min(messages_time_step, emoticons_time_step)
+
+    _multiplot_figure_layout(fig, start_timestamp, points_count, min_time_step)
 
     return fig
 
@@ -266,7 +191,7 @@ def append_messages_traces(
 
         trace = go.Scatter(
             name=line_name,
-            x=df.index.map(_humanize_timedelta),
+            x=df.index,
             y=df["messages"],
             mode="lines",
         )
@@ -277,7 +202,7 @@ def append_messages_traces(
 def append_emoticons_traces(
         fig: Figure,
         emoticons_dfs: dict[str, pd.DataFrame],
-        time_multiplier: int,
+        time_step: int,
         row=None,
         col=None,
 ) -> None:
@@ -291,9 +216,9 @@ def append_emoticons_traces(
 
         trace = go.Bar(
             name=line_name,
-            x=df.index.map(_humanize_timedelta),
+            x=df.index,
             y=df["messages"],
-            width=time_multiplier,
+            width=time_step,
             offset=0,
         )
 
@@ -303,77 +228,49 @@ def append_emoticons_traces(
         fig.add_trace(trace, row=row, col=col)
 
 
-def _standard_figure_layout(
-        fig: Figure,
-        rolling_dataframes: dict[str, pd.DataFrame],
-        time_step: int,
-        figure_title: str,
-        xaxis_title: str,
-) -> None:
-    any_key = next(iter(rolling_dataframes))
-    points_count = len(rolling_dataframes[any_key])
-    start_timestamp: datetime = rolling_dataframes[any_key]["timestamp"][0].to_pydatetime()
-
-    xaxis_captions, xaxis_captions_detailed = _build_timedelta_axis_captions(start_timestamp, points_count, time_step)
-
-    fig.update_layout(
-        title=figure_title,
-        autosize=True,
-        height=330,
-        margin=dict(t=30, b=0, l=0, r=0, pad=5),
-        hovermode="x unified",
-        xaxis_title=xaxis_title,
-        xaxis=dict(
-            type='category',
-
-            tickmode='array',
-            tickvals=xaxis_captions,
-            ticktext=xaxis_captions_detailed,
-            tickfont_size=11,
-            ticklabelposition="outside right",
-            autotickangles=[0, 60, 90],
-
-            range=[0, min((3600 // time_step) * 3, points_count)],
-            rangeslider_visible=True,
-        ),
-        yaxis=dict(
-            fixedrange=True,
-        ),
-    )
-
-
 def _multiplot_figure_layout(
         fig: Figure,
-        rolling_dataframes: dict[str, pd.DataFrame],
+        start_timestamp: datetime,
+        points_count: int,
         time_step: int,
 ) -> None:
-    any_key = next(iter(rolling_dataframes))
-    points_count = len(rolling_dataframes[any_key])
-    start_timestamp: datetime = rolling_dataframes[any_key]["timestamp"][0].to_pydatetime()
-
-    xaxis_captions, xaxis_captions_detailed = _build_timedelta_axis_captions(start_timestamp, points_count, time_step)
+    # Link all traces to one single X axis.
+    total_yaxes = len(list(fig.select_yaxes()))
+    fig.update_traces(xaxis=f"x{total_yaxes}")
 
     fig.update_layout(
         autosize=True,
         modebar=dict(orientation="v"),
         margin=dict(t=0, b=0, l=0, r=130),
+        hoversubplots="axis",
         hovermode="x unified",
         barmode="stack",
     )
 
-    fig.update_yaxes(fixedrange=True)
+    xaxis_aliases = _build_time_axis_aliases(start_timestamp, points_count, time_step)
 
     fig.update_xaxes(
-        type='category',
+        type="linear",
+        minallowed=-time_step,
+        maxallowed=points_count * time_step,
 
-        tickmode='array',
-        tickvals=xaxis_captions,
-        ticktext=xaxis_captions_detailed,
+        tickmode="linear",
+        tick0=0,
+        dtick=3600,
+        labelalias=xaxis_aliases,
+        tickformat="d",
+        showgrid=True,
+
         tickfont_size=11,
         ticklabelposition="outside right",
         autotickangles=[0, 60, 90],
 
-        range=[0, min((3600 // time_step) * 3, points_count)],
+        range=[0, min(3600 * 3, points_count * time_step)],
+    )
+
+    fig.update_yaxes(
+        minallowed=0,
+        fixedrange=True,
     )
 
     # Uncluster legends of traces of each shape.
@@ -384,32 +281,34 @@ def _multiplot_figure_layout(
         fig.update_traces(row=l, legend=legend_name)
 
 
-def _build_timedelta_axis_captions(
+def _build_time_axis_aliases(
         start_timestamp: datetime,
-        points_count: int, time_step: int,
-) -> tuple[list[str], list[str]]:
-    vals = []
-    text = []
+        points_count: int,
+        time_step: int,
+) -> dict[int, str]:
+    result = {}
+    for seconds in range(0, points_count * time_step, time_step):
+        text = short_caption = _humanize_timedelta(seconds)
 
-    for x in range(0, points_count, 3600 // time_step):
-        short_caption = _humanize_timedelta(x * time_step)
-        vals.append(short_caption)
+        if seconds % 3600 == 0:
+            point_timestamp = start_timestamp + timedelta(seconds=seconds)
+            text = (
+                f"{short_caption}<br>" +
+                f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
+                f"{point_timestamp.strftime('%H:%M:%S')}"
+            )
 
-        point_timestamp = start_timestamp + timedelta(seconds=x * time_step)
-        text.append(
-            f"{short_caption}<br>" +
-            f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
-            f"{point_timestamp.strftime('%H:%M:%S')}"
-        )
+        result[seconds] = text
 
-    return vals, text
+    return result
 
 
 def _humanize_timedelta(total_seconds: int | timedelta) -> str:
     if isinstance(total_seconds, timedelta):
         total_seconds = total_seconds.total_seconds()
 
-    hours, remainder = divmod(total_seconds, 3600)
+    sign = '-' if total_seconds < 0 else ''
+    hours, remainder = divmod(abs(total_seconds), 3600)
     minutes, seconds = divmod(remainder, 60)
 
-    return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+    return f'{sign}{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
