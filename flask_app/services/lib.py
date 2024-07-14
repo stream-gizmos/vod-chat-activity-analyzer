@@ -167,8 +167,13 @@ def build_multiplot_figure(
     else:
         fig.update_xaxes(row=messages_row, title=xaxis_title)
 
+    any_df_key = next(iter(messages_dfs))
+    any_df = messages_dfs[any_df_key]
+    start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()
+    points_count = len(any_df)
     min_time_step = min(messages_time_step, emoticons_time_step)
-    _multiplot_figure_layout(fig, messages_dfs, min_time_step)
+
+    _multiplot_figure_layout(fig, start_timestamp, points_count, min_time_step)
 
     return fig
 
@@ -225,7 +230,8 @@ def append_emoticons_traces(
 
 def _multiplot_figure_layout(
         fig: Figure,
-        rolling_dataframes: dict[str, pd.DataFrame],
+        start_timestamp: datetime,
+        points_count: int,
         time_step: int,
 ) -> None:
     # Link all traces to one single X axis.
@@ -241,11 +247,6 @@ def _multiplot_figure_layout(
         barmode="stack",
     )
 
-    # TODO Move this block outside
-    any_df_key = next(iter(rolling_dataframes))
-    any_df = rolling_dataframes[any_df_key]
-    points_count = len(any_df)
-    start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()
     xaxis_aliases = _build_time_axis_aliases(start_timestamp, points_count, time_step)
 
     fig.update_xaxes(
