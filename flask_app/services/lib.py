@@ -138,9 +138,9 @@ def build_emoticons_dataframes(
 
 def build_multiplot_figure(
         messages_dfs: dict[IntervalWindow, pd.DataFrame],
+        messages_time_step: int,
         emoticons_dfs: dict[str, pd.DataFrame],
-        time_step: int,
-        emoticons_time_multiplier: int,
+        emoticons_time_step: int,
         xaxis_title: str,
 ) -> Figure:
     messages_row = 1
@@ -161,13 +161,14 @@ def build_multiplot_figure(
     fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1))
 
     if emoticons_row > 0:
-        append_emoticons_traces(fig, emoticons_dfs, time_step * emoticons_time_multiplier, row=emoticons_row, col=1)
+        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_step, row=emoticons_row, col=1)
         fig.update_yaxes(row=emoticons_row, title="Emoticons")
         fig.update_xaxes(row=emoticons_row, title=xaxis_title)
     else:
         fig.update_xaxes(row=messages_row, title=xaxis_title)
 
-    _multiplot_figure_layout(fig, messages_dfs, time_step)
+    min_time_step = min(messages_time_step, emoticons_time_step)
+    _multiplot_figure_layout(fig, messages_dfs, min_time_step)
 
     return fig
 
