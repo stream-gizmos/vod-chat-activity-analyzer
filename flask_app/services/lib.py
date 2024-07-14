@@ -234,12 +234,12 @@ def build_multiplot_figure(
         cols=1,
         shared_xaxes=True,
         row_heights=row_heights,
-        vertical_spacing=.2,
+        vertical_spacing=.02,
     )
 
     append_messages_traces(fig, messages_dfs, row=messages_row, col=1)
     fig.update_yaxes(row=messages_row, title="Messages")
-    fig.update_xaxes(row=messages_row, rangeslider=dict(visible=True, thickness=.1))
+    fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1))
 
     if emoticons_row > 0:
         append_emoticons_traces(fig, emoticons_dfs, emoticons_time_multiplier, row=emoticons_row, col=1)
@@ -357,6 +357,7 @@ def _multiplot_figure_layout(
         autosize=True,
         modebar=dict(orientation="v"),
         margin=dict(t=0, b=0, l=0, r=130),
+        hoversubplots="axis",
         hovermode="x unified",
         barmode="stack",
     )
@@ -375,6 +376,9 @@ def _multiplot_figure_layout(
 
         range=[0, min((3600 // time_step) * 3, points_count)],
     )
+
+    total_yaxes = len(list(fig.select_yaxes()))
+    fig.update_traces(xaxis=f"x{total_yaxes}")
 
     # Uncluster legends of traces of each shape.
     # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
