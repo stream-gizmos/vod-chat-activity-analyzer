@@ -4,6 +4,7 @@ FROM ubuntu:20.04
 ARG WINE_VERSION=winehq-stable
 ARG PYTHON_VERSION=3.11.9
 ARG PYINSTALLER_VERSION=6.8
+ARG GIT_VERSION=2.45.2
 
 # PYPI repository location
 ENV PYPI_URL=https://pypi.python.org/
@@ -14,6 +15,7 @@ ENV PYPI_INDEX_URL=https://pypi.python.org/simple
 ENV WINEARCH win64
 ENV WINEDEBUG fixme-all
 ENV WINEPREFIX /wine
+ENV WINEPATH C:\\Program Files\\Git\\bin\\
 
 # xvfb settings
 ENV DISPLAY :0
@@ -36,8 +38,8 @@ chmod a+x /entrypoint.sh
 
 # we need wine for this to work, so we'll use the PPA
 dpkg --add-architecture i386
-apt update -qy
-apt install --no-install-recommends -qfy \
+apt update -y
+apt install --no-install-recommends -y \
   apt-transport-https \
   cabextract \
   curl \
@@ -56,9 +58,14 @@ apt install --no-install-recommends -qfy \
 wget -nv https://dl.winehq.org/wine-builds/winehq.key
 apt-key add winehq.key
 add-apt-repository 'https://dl.winehq.org/wine-builds/ubuntu/'
-apt update -qy
-apt install --install-recommends -qfy \
+apt update -y
+apt install --install-recommends -y \
   $WINE_VERSION
+
+# For installing Python packages from GitHub
+apt install --no-install-recommends -y \
+  p7zip \
+  p7zip-full
 
 apt clean
 rm -rf /var/lib/apt/lists/*
@@ -80,9 +87,9 @@ winetricks -q win10
 # install python in wine, using the msi packages to install, extracting
 # the files directly, since installing isn't running correctly.
 for msifile in `echo core dev exe lib path pip tcltk tools`; do
-    wget -nv "https://www.python.org/ftp/python/$PYTHON_VERSION/amd64/${msifile}.msi";
-    wine msiexec /i "${msifile}.msi" /qb TARGETDIR=C:/Python3;
-    rm ${msifile}.msi;
+    wget -nv "https://www.python.org/ftp/python/$PYTHON_VERSION/amd64/${msifile}.msi"
+    wine msiexec /i "${msifile}.msi" /qb TARGETDIR=C:/Python3
+    rm ${msifile}.msi
 done
 
 cd /wine/drive_c/Python3
@@ -96,7 +103,19 @@ echo 'ftype PythonScript=c:\Python3\python.exe "%1" %*' | wine cmd
 while pgrep wineserver >/dev/null; do echo "Waiting for wineserver"; sleep 1; done
 chmod +x /usr/bin/python /usr/bin/easy_install /usr/bin/pip /usr/bin/pyinstaller /usr/bin/pyupdater
 (pip install -U pip || true)
+
+# For installing Python packages from GitHub
+cd "/wine/drive_c/Program Files"
+mkdir Git
+cd Git
+export GIT_DISTRO_NAME="PortableGit-${GIT_VERSION}-64-bit.7z.exe"
+wget -nv "https://github.com/git-for-windows/git/releases/download/v${GIT_VERSION}.windows.1/${GIT_DISTRO_NAME}"
+7z x ${GIT_DISTRO_NAME}
+rm ${GIT_DISTRO_NAME}
+
 rm -rf /tmp/.wine-*
+
+echo 'wine '\''C:\\Program Files\\Git\\bin\\git.exe'\'' "$@"' > /usr/bin/git
 
 # install Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019 dll files
 rm -f "$W_TMP"/*
