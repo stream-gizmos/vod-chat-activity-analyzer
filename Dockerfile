@@ -1,4 +1,4 @@
-FROM python:3.11-slim as packages
+FROM python:3.11-slim AS packages
 
 RUN <<EOT
 set -ex
