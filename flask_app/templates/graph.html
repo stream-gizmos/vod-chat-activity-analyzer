@@ -2,6 +2,8 @@
 
 {% block scripts %}
     <script type="text/javascript" src="{{ url_for("static", filename="plotly-2.32.0.min.js") }}" defer></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="twitch-embed-v1.js") }}" defer></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -18,18 +20,54 @@
                 <b>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</b>
             {% endif %}
         </p>
+        <p>
+            {% if graph_data.platform %}
+                <button type="button" onclick="toggleVisibility('player-container-{{ alias | safe }}')">Show the video</button>
+            {% endif %}
+        </p>
+
+        {% if graph_data.platform %}
+            <div id="player-container-{{ alias }}" class="hidden">
+                {% if graph_data.platform == "twitch" %}
+                    <div id="twitch-player-{{ alias }}" class="twitch-player"></div>
+                    <script type="text/javascript">
+                    </script>
+                {% endif %}
+            </div>
+        {% endif %}
+
         <div id="{{ alias }}"></div>
     {% endfor %}
 
     <script>
-        const config = {
+        const plotlyConfig = {
             modeBarButtonsToRemove: ['select', 'lasso2d'],
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             {% for alias, graph_data in graphs.items() %}
-                const {{ alias }} = {{ graph_data.json | safe }}
-                Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, config)
+                (function () {
+                    const {{ alias }} = {{ graph_data.json | safe }}
+                    Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, plotlyConfig)
+                })();
+
+                {% if graph_data.platform == "twitch" and graph_data.vod_id %}
+                    (function () {
+                        const vodId = {{ graph_data.vod_id | safe }}
+                        const options = {
+                            width: "60%",
+                            video: vodId,
+                            layout: "video-with-chat",
+                            autoplay: false,
+                            muted: false,
+                        }
+                        const player = new Twitch.Player("twitch-player-{{ alias }}", options)
+
+                        player.addEventListener(Twitch.Player.READY, () => {
+                            //player.play()
+                        })
+                    })();
+                {% endif %}
             {% endfor %}
         });
     </script>

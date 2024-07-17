@@ -53,6 +53,24 @@ def is_http_url(url):
         return False
 
 
+def parse_vod_url(url: str) -> dict:
+    parts = urlparse(url)
+
+    platform = None
+    vod_id = None
+    if parts.hostname == "www.twitch.tv" or parts.hostname == "twitch.tv":
+        platform = "twitch"
+
+        if parts.path.startswith("/videos/"):
+            vod_id = parts.path[8:]
+
+    return {
+        "url": url,
+        "platform": platform,
+        "vod_id": vod_id,
+    }
+
+
 def read_json_file(file_path):
     try:
         with open(file_path, "r") as fp:
