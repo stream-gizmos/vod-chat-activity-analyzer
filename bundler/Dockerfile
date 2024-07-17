@@ -25,7 +25,7 @@ ENV W_TMP="$W_DRIVE_C/windows/temp/_$0"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-COPY bundler/entrypoint.sh /entrypoint.sh
+COPY --link bundler/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
@@ -121,7 +121,7 @@ EOT
 
 VOLUME /src/
 WORKDIR /wine/drive_c/src/
-COPY requirements.txt /src/
+COPY --link requirements.txt /src/
 
 RUN <<EOT
 #!/bin/bash
