@@ -2,6 +2,7 @@ import webview
 import webview.menu as wm
 
 from flask_app import init_app
+from flask_app.services.lib import find_free_port
 
 webview_name = "Chat Analyzer"
 
@@ -19,6 +20,7 @@ def main():
 
     menu_items = build_menu()
 
+    http_port = find_free_port()
     webview.start(
         on_start,
         window,
@@ -26,7 +28,7 @@ def main():
         private_mode=False,
         ssl=True,
         http_server=True,
-        http_port=13377,
+        http_port=http_port,
     )
 
 
