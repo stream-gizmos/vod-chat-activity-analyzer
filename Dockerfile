@@ -1,4 +1,4 @@
-FROM python:3.11-slim as packages
+FROM python:3.11-slim AS packages
 
 RUN <<EOT
 set -ex
@@ -11,7 +11,7 @@ EOT
 
 WORKDIR /var/app/
 
-COPY requirements.txt .
+COPY --link requirements.txt .
 
 RUN <<EOT
 set -ex
@@ -26,7 +26,7 @@ COPY --from=packages /usr/local/lib/python3.11/site-packages /usr/local/lib/pyth
 
 WORKDIR /var/app/
 
-COPY . .
+COPY --link . .
 
 VOLUME ./data
 

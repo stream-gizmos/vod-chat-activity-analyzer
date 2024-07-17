@@ -1,28 +1,63 @@
-import sys
-import threading
-
 import webview
+import webview.menu as wm
 
 from flask_app import init_app
+from flask_app.services.lib import find_free_port
 
 webview_name = "Chat Analyzer"
-host = "127.0.0.1"
-port = 8080
 
 flask_app = init_app()
 
 
-def start_web_server():
-    flask_app.run(host=host, port=port)
+def main():
+    window = webview.create_window(
+        webview_name,
+        flask_app,
+        width=800,
+        height=600,
+        resizable=True,
+    )
+
+    menu_items = build_menu()
+
+    http_port = find_free_port()
+    webview.start(
+        on_start,
+        window,
+        menu=menu_items,
+        private_mode=False,
+        ssl=True,
+        http_server=True,
+        http_port=http_port,
+    )
 
 
-if __name__ == '__main__':
-    web_server_thread = threading.Thread(target=start_web_server)
-    web_server_thread.daemon = True
-    web_server_thread.start()
-    print(f"{web_server_thread=}")
+def build_menu():
+    return [
+        wm.Menu(
+            "Options",
+            [
+                wm.MenuAction("Clear all cookies", clear_cookies),
+                wm.MenuSeparator(),
+                wm.MenuAction("Exit", close_window),
+            ],
+        ),
+    ]
 
-    webview.create_window(webview_name, f"http://{host}:{port}/", width=800, height=600, resizable=True)
-    webview.start()
 
-    sys.exit()
+def on_start(window):
+    window.maximize()
+
+
+def clear_cookies():
+    window = webview.active_window()
+    window.clear_cookies()
+
+
+def close_window():
+    window = webview.active_window()
+    window.destroy()
+
+
+if __name__ == "__main__":
+    main()

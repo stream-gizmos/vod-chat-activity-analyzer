@@ -25,7 +25,7 @@ ENV W_TMP="$W_DRIVE_C/windows/temp/_$0"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-COPY bundler/entrypoint.sh /entrypoint.sh
+COPY --link bundler/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
@@ -36,8 +36,8 @@ chmod a+x /entrypoint.sh
 
 # we need wine for this to work, so we'll use the PPA
 dpkg --add-architecture i386
-apt update -qy
-apt install --no-install-recommends -qfy \
+apt update -y
+apt install --no-install-recommends -y \
   apt-transport-https \
   cabextract \
   curl \
@@ -56,8 +56,8 @@ apt install --no-install-recommends -qfy \
 wget -nv https://dl.winehq.org/wine-builds/winehq.key
 apt-key add winehq.key
 add-apt-repository 'https://dl.winehq.org/wine-builds/ubuntu/'
-apt update -qy
-apt install --install-recommends -qfy \
+apt update -y
+apt install --install-recommends -y \
   $WINE_VERSION
 
 apt clean
@@ -80,9 +80,9 @@ winetricks -q win10
 # install python in wine, using the msi packages to install, extracting
 # the files directly, since installing isn't running correctly.
 for msifile in `echo core dev exe lib path pip tcltk tools`; do
-    wget -nv "https://www.python.org/ftp/python/$PYTHON_VERSION/amd64/${msifile}.msi";
-    wine msiexec /i "${msifile}.msi" /qb TARGETDIR=C:/Python3;
-    rm ${msifile}.msi;
+    wget -nv "https://www.python.org/ftp/python/$PYTHON_VERSION/amd64/${msifile}.msi"
+    wine msiexec /i "${msifile}.msi" /qb TARGETDIR=C:/Python3
+    rm ${msifile}.msi
 done
 
 cd /wine/drive_c/Python3
@@ -121,7 +121,7 @@ EOT
 
 VOLUME /src/
 WORKDIR /wine/drive_c/src/
-COPY requirements.txt /src/
+COPY --link requirements.txt /src/
 
 RUN <<EOT
 #!/bin/bash

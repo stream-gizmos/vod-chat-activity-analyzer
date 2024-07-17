@@ -1,4 +1,6 @@
 import json
+import socket
+from contextlib import closing
 from datetime import timedelta, datetime
 from hashlib import md5
 from itertools import islice
@@ -33,6 +35,13 @@ def hash_to_timestamps_file(video_hash: str) -> str:
 
 def hash_to_emoticons_file(video_hash: str) -> str:
     return f"data/{video_hash}_emoticons.json"
+
+
+def find_free_port() -> int:
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(("", 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
 
 # https://stackoverflow.com/questions/7160737/how-to-validate-a-url-in-python-malformed-or-not
