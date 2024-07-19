@@ -8,24 +8,27 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Chat Activity Statistics</h1>
+    <h1 style="margin-top: 0;">Chat Activity Statistics</h1>
 
     {% for alias, graph_data in graphs | dictsort %}
-        <p id="vod_{{ alias }}">
+        <div id="vod_{{ alias }}">
             {% if graph_data.url %}
-                <b>{{ loop.index0 + 1 }}. VOD URL</b>:
-                <a href="{{ graph_data.url }}" target="_blank">
-                    {{ graph_data.caption or graph_data.url }}
-                </a>
+                <h3>
+                    {{ loop.index0 + 1 }}. VOD URL:
+                    <a href="{{ graph_data.url }}" target="_blank">
+                        {{ graph_data.caption or graph_data.url }}
+                    </a>
+                </h3>
             {% else %}
-                <b>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</b>
+                <h3>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</h3>
             {% endif %}
-        </p>
-        <p>
+        </div>
+        <div style="margin-top: .5rem">
             {% if graph_data.platform %}
                 <button type="button" onclick="toggleVisibility('player-container-{{ alias }}')">Show the video</button>
+                <span>(Shift+Click on the chart to seek the video to this time, resize the player by mouse drag the bottom right corner)</span>
             {% endif %}
-        </p>
+        </div>
 
         {% if graph_data.platform %}
             <div id="player-container-{{ alias }}" class="player-container resizable hidden">

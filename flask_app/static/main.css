@@ -1,3 +1,11 @@
+h1, h2, h3, h4, h5 {
+    margin-bottom: 0;
+}
+
+.container {
+    padding: 0.5rem;
+}
+
 .vod-urls input {
     width: 400px;
 }
@@ -7,9 +15,9 @@
 }
 
 .resizable {
-  resize: horizontal;
-  overflow: hidden;
-  border: 0;
+    resize: horizontal;
+    overflow: hidden;
+    border: 0;
 }
 
 .player-container {
