@@ -41,7 +41,7 @@ function onPointClick($plot, handler) {
 
 function buildTwitchPlayer(nodeId, vodId) {
     const options = {
-        width: "60%",
+        width: "100%",
         video: vodId,
         autoplay: false,
         muted: false,
@@ -65,7 +65,7 @@ function buildYoutubePlayer(nodeId, vodId) {
             if (!!window.YT?.loaded) {
                 clearInterval(intervalId)
                 resolve(new YT.Player(nodeId, {
-                    width: "60%",
+                    width: "100%",
                     videoId: vodId,
                     playerVars: {
                         autoplay: 0,

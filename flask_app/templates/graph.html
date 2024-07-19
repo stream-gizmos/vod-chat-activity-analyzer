@@ -28,15 +28,13 @@
         </p>
 
         {% if graph_data.platform %}
-            <div id="player-container-{{ alias }}" class="hidden">
+            <div id="player-container-{{ alias }}" class="player-container resizable hidden">
                 {% if graph_data.platform == "twitch" %}
                     <div id="twitch-player-{{ alias }}" class="twitch-player"></div>
                 {% endif %}
                 {% if graph_data.platform == "youtube" %}
                     <div id="youtube-player-{{ alias }}" class="youtube-player"></div>
                 {% endif %}
-
-                <p>(Shift+Click on the chart to seek the video to this time)</p>
             </div>
         {% endif %}
 
