@@ -17,9 +17,7 @@ function toggleVisibility(nodeId) {
 
     if (!isVisible(nodeId)) {
         $container.classList.remove("hidden")
-        $container.classList.add("visible")
     } else {
-        $container.classList.remove("visible")
         $container.classList.add("hidden")
     }
 }
