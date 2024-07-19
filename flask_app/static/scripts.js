@@ -22,6 +22,11 @@ function onPointClick($plot, handler) {
 
         const lines = data.points.filter(trace => trace.data.mode === "lines")
         const mainLine = lines.find(trace => trace.data.name === "15s") || lines[0]
+
+        if (!mainLine) {
+            throw "Cannot find the main line for getting the time"
+        }
+
         handler(mainLine.x, mainLine.y)
     })
 }
