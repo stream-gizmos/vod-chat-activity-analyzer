@@ -1,11 +1,21 @@
-function toggleVisibility(playerContainerId) {
-    const $container = document.querySelector(`#${playerContainerId}`)
+function isVisible(nodeId) {
+    const $container = document.querySelector(`#${nodeId}`)
 
     if (!$container) {
         return
     }
 
-    if ($container.classList.contains("hidden")) {
+    return !$container.classList.contains("hidden")
+}
+
+function toggleVisibility(nodeId) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    if (!isVisible(nodeId)) {
         $container.classList.remove("hidden")
         $container.classList.add("visible")
     } else {

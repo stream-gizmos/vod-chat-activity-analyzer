@@ -23,7 +23,7 @@
         </p>
         <p>
             {% if graph_data.platform %}
-                <button type="button" onclick="toggleVisibility('player-container-{{ alias | safe }}')">Show the video</button>
+                <button type="button" onclick="toggleVisibility('player-container-{{ alias }}')">Show the video</button>
             {% endif %}
         </p>
 
@@ -57,20 +57,28 @@
 
                 {% if graph_data.platform == "twitch" and graph_data.vod_id %}
                     (function () {
-                        const vodId = "{{ graph_data.vod_id | safe }}"
+                        const vodId = "{{ graph_data.vod_id }}"
                         const player = buildTwitchPlayer("twitch-player-{{ alias }}", vodId)
 
                         const $plot = document.getElementById("{{ alias }}")
-                        onPointClick($plot, seconds => player.seek(seconds))
+                        onPointClick($plot, seconds => {
+                            if (isVisible("player-container-{{ alias }}")) {
+                                player.seek(seconds)
+                            }
+                        })
                     })();
                 {% endif %}
                 {% if graph_data.platform == "youtube" and graph_data.vod_id %}
                     (async function () {
-                        const vodId = "{{ graph_data.vod_id | safe }}"
+                        const vodId = "{{ graph_data.vod_id }}"
                         const player = await buildYoutubePlayer("youtube-player-{{ alias }}", vodId)
 
                         const $plot = document.getElementById("{{ alias }}")
-                        onPointClick($plot, seconds => player.seekTo(seconds))
+                        onPointClick($plot, seconds => {
+                            if (isVisible("player-container-{{ alias }}")) {
+                                player.seekTo(seconds)
+                            }
+                        })
                     })();
                 {% endif %}
             {% endfor %}
