@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <title>VOD Chat Activity Analyzer</title>
+    <link type="text/css" rel="stylesheet" href="https://unpkg.com/modern-normalize@^2/modern-normalize.css">
     <link type="text/css" rel="stylesheet" href="{{ url_for("static", filename="main.css") }}">
     {% block scripts %}{% endblock %}
 </head>
 <body>
-<div class="container">
+<main class="container">
     {% block content %}{% endblock %}
-</div>
+</main>
 </body>
 </html>

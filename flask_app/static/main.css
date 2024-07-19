@@ -1,3 +1,11 @@
+h1, h2, h3, h4, h5 {
+    margin-bottom: 0;
+}
+
+.container {
+    padding: 0.5rem;
+}
+
 .vod-urls input {
     width: 400px;
 }
@@ -6,8 +14,21 @@
     display: none;
 }
 
-.visible {
-    display: initial;
+.resizable {
+    resize: horizontal;
+    overflow: hidden;
+    border: 0;
+}
+
+.player-container {
+    min-width: 500px;
+    width: 600px;
+    max-width: 95vw;
+    margin-top: 1rem;
+}
+
+.js-plotly-plot {
+    margin-top: 1rem;
 }
 
 .twitch-player iframe, .youtube-player {
