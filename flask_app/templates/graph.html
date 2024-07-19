@@ -11,7 +11,7 @@
     <h1 style="margin-top: 0;">Chat Activity Statistics</h1>
 
     {% for alias, graph_data in graphs | dictsort %}
-        <div id="vod_{{ alias }}">
+        <div id="section_{{ alias }}">
             {% if graph_data.url %}
                 <h3>
                     {{ loop.index0 + 1 }}. VOD URL:

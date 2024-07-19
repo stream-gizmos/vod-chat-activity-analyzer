@@ -125,7 +125,7 @@ def display_graph(video_hashes):
 
         vod_url_data = parse_vod_url(meta["url"])
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{i:02d}"] = dict(
+        graphs[f"vod{i:02d}"] = dict(
             json=graph_json,
             **vod_url_data,
         )
@@ -158,6 +158,6 @@ def display_graph(video_hashes):
         )
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
+        graphs[f"vod{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
 
     return render_template("graph.html", graphs=graphs)
