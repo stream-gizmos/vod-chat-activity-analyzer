@@ -65,11 +65,13 @@ def parse_vod_url(url: str) -> dict:
         if parts.path.startswith("/videos/"):
             vod_id = parts.path[8:]
 
-    # https: // www.youtube.com / watch?v = gYLDguEHhRg
     if parts.hostname == "www.youtube.com" or parts.hostname == "youtube.com":
         platform = "youtube"
         vod_id = qs.get("v", [])
         vod_id = vod_id[0] if len(vod_id) else None
+    if parts.hostname == "youtu.be":
+        platform = "youtube"
+        vod_id = parts.path
 
     return {
         "url": url,
