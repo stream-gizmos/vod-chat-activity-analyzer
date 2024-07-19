@@ -3,6 +3,7 @@
 {% block scripts %}
     <script type="text/javascript" src="{{ url_for("static", filename="plotly-2.32.0.min.js") }}" defer></script>
     <script type="text/javascript" src="{{ url_for("static", filename="twitch-embed-v1.js") }}" defer></script>
+    <script type="text/javascript" src="https://www.youtube.com/player_api"></script>
     <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
 {% endblock %}
 
@@ -30,8 +31,12 @@
             <div id="player-container-{{ alias }}" class="hidden">
                 {% if graph_data.platform == "twitch" %}
                     <div id="twitch-player-{{ alias }}" class="twitch-player"></div>
-                    <p>(Shift+Click on the chart to navigate the video to this time)</p>
                 {% endif %}
+                {% if graph_data.platform == "youtube" %}
+                    <div id="youtube-player-{{ alias }}" class="youtube-player"></div>
+                {% endif %}
+
+                <p>(Shift+Click on the chart to seek the video to this time)</p>
             </div>
         {% endif %}
 
@@ -52,11 +57,10 @@
 
                 {% if graph_data.platform == "twitch" and graph_data.vod_id %}
                     (function () {
-                        const vodId = {{ graph_data.vod_id | safe }}
+                        const vodId = "{{ graph_data.vod_id | safe }}"
                         const options = {
                             width: "60%",
                             video: vodId,
-                            layout: "video-with-chat",
                             autoplay: false,
                             muted: false,
                         }
@@ -64,6 +68,31 @@
 
                         const $plot = document.getElementById("{{ alias }}")
                         onPointClick($plot, seconds => player.seek(seconds))
+                    })();
+                {% endif %}
+                {% if graph_data.platform == "youtube" and graph_data.vod_id %}
+                    (function () {
+                        const youtubeLibChecker = function () {
+                            if (!!window.YT?.loaded) {
+                                clearInterval(intervalId)
+                                embedYoutubeVideo()
+                            }
+                        }
+                        const intervalId = setInterval(youtubeLibChecker, 200)
+
+                        const embedYoutubeVideo = function () {
+                            const vodId = "{{ graph_data.vod_id | safe }}"
+                            const player = new YT.Player("youtube-player-{{ alias }}", {
+                                width: "60%",
+                                videoId: vodId,
+                                playerVars: {
+                                    autoplay: 0,
+                                },
+                            })
+
+                            const $plot = document.getElementById("{{ alias }}")
+                            onPointClick($plot, seconds => player.seekTo(seconds))
+                        }
                     })();
                 {% endif %}
             {% endfor %}

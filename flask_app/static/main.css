@@ -10,7 +10,7 @@
     display: initial;
 }
 
-.twitch-player iframe {
+.twitch-player iframe, .youtube-player {
     height: 100%;
     aspect-ratio: 16 / 9;
 }
