@@ -30,8 +30,7 @@
             <div id="player-container-{{ alias }}" class="hidden">
                 {% if graph_data.platform == "twitch" %}
                     <div id="twitch-player-{{ alias }}" class="twitch-player"></div>
-                    <script type="text/javascript">
-                    </script>
+                    <p>(Shift+Click on the chart to navigate the video to this time)</p>
                 {% endif %}
             </div>
         {% endif %}
@@ -63,9 +62,8 @@
                         }
                         const player = new Twitch.Player("twitch-player-{{ alias }}", options)
 
-                        player.addEventListener(Twitch.Player.READY, () => {
-                            //player.play()
-                        })
+                        const $plot = document.getElementById("{{ alias }}")
+                        onPointClick($plot, seconds => player.seek(seconds))
                     })();
                 {% endif %}
             {% endfor %}
