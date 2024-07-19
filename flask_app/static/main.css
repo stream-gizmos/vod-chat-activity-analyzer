@@ -1,3 +1,16 @@
 .vod-urls input {
     width: 400px;
 }
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: initial;
+}
+
+.twitch-player iframe, .youtube-player {
+    height: 100%;
+    aspect-ratio: 16 / 9;
+}

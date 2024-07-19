@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 from hashlib import md5
 from itertools import islice
 from typing import TypeVar
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -51,6 +51,33 @@ def is_http_url(url):
         return all([result.scheme, result.netloc]) and (result.scheme == "http" or result.scheme == "https")
     except ValueError:
         return False
+
+
+def parse_vod_url(url: str) -> dict:
+    parts = urlparse(url)
+    qs = parse_qs(parts.query)
+
+    platform = None
+    vod_id = None
+    if parts.hostname == "www.twitch.tv" or parts.hostname == "twitch.tv":
+        platform = "twitch"
+
+        if parts.path.startswith("/videos/"):
+            vod_id = parts.path[8:]
+
+    if parts.hostname == "www.youtube.com" or parts.hostname == "youtube.com":
+        platform = "youtube"
+        vod_id = qs.get("v", [])
+        vod_id = vod_id[0] if len(vod_id) else None
+    if parts.hostname == "youtu.be":
+        platform = "youtube"
+        vod_id = parts.path
+
+    return {
+        "url": url,
+        "platform": platform,
+        "vod_id": vod_id,
+    }
 
 
 def read_json_file(file_path):

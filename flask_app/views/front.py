@@ -18,6 +18,7 @@ from flask_app.services.lib import (
     make_buckets,
     mine_emoticons,
     normalize_timeline,
+    parse_vod_url,
     read_json_file,
     url_to_hash,
 )
@@ -122,8 +123,12 @@ def display_graph(video_hashes):
             "Video time (in minutes)",
         )
 
+        vod_url_data = parse_vod_url(meta["url"])
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"graph{i:02d}"] = dict(url=meta["url"], json=graph_json)
+        graphs[f"graph{i:02d}"] = dict(
+            json=graph_json,
+            **vod_url_data,
+        )
 
         combined_messages_df = messages_df.copy() if combined_messages_df is None \
             else combined_messages_df.add(messages_df, fill_value=0)

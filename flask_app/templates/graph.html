@@ -2,6 +2,9 @@
 
 {% block scripts %}
     <script type="text/javascript" src="{{ url_for("static", filename="plotly-2.32.0.min.js") }}" defer></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="twitch-embed-v1.js") }}" defer></script>
+    <script type="text/javascript" src="https://www.youtube.com/player_api" defer></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -18,18 +21,66 @@
                 <b>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</b>
             {% endif %}
         </p>
+        <p>
+            {% if graph_data.platform %}
+                <button type="button" onclick="toggleVisibility('player-container-{{ alias }}')">Show the video</button>
+            {% endif %}
+        </p>
+
+        {% if graph_data.platform %}
+            <div id="player-container-{{ alias }}" class="hidden">
+                {% if graph_data.platform == "twitch" %}
+                    <div id="twitch-player-{{ alias }}" class="twitch-player"></div>
+                {% endif %}
+                {% if graph_data.platform == "youtube" %}
+                    <div id="youtube-player-{{ alias }}" class="youtube-player"></div>
+                {% endif %}
+
+                <p>(Shift+Click on the chart to seek the video to this time)</p>
+            </div>
+        {% endif %}
+
         <div id="{{ alias }}"></div>
     {% endfor %}
 
     <script>
-        const config = {
+        const plotlyConfig = {
             modeBarButtonsToRemove: ['select', 'lasso2d'],
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             {% for alias, graph_data in graphs.items() %}
-                const {{ alias }} = {{ graph_data.json | safe }}
-                Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, config)
+                (function () {
+                    const {{ alias }} = {{ graph_data.json | safe }}
+                    Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, plotlyConfig)
+                })();
+
+                {% if graph_data.platform == "twitch" and graph_data.vod_id %}
+                    (function () {
+                        const vodId = "{{ graph_data.vod_id }}"
+                        const player = buildTwitchPlayer("twitch-player-{{ alias }}", vodId)
+
+                        const $plot = document.getElementById("{{ alias }}")
+                        onPointClick($plot, seconds => {
+                            if (isVisible("player-container-{{ alias }}")) {
+                                player.seek(seconds)
+                            }
+                        })
+                    })();
+                {% endif %}
+                {% if graph_data.platform == "youtube" and graph_data.vod_id %}
+                    (async function () {
+                        const vodId = "{{ graph_data.vod_id }}"
+                        const player = await buildYoutubePlayer("youtube-player-{{ alias }}", vodId)
+
+                        const $plot = document.getElementById("{{ alias }}")
+                        onPointClick($plot, seconds => {
+                            if (isVisible("player-container-{{ alias }}")) {
+                                player.seekTo(seconds)
+                            }
+                        })
+                    })();
+                {% endif %}
             {% endfor %}
         });
     </script>
