@@ -41,31 +41,6 @@ function onPointClick($plot, handler) {
     })
 }
 
-/**
- * @param {number} td
- * @return {string}
- */
-function timeDeltaToTime(td) {
-    const sign = td < 0 ? "-" : ""
-    let hours = Math.floor(Math.abs(td) / 3600)
-    const remainder = Math.abs(td) - hours * 3600
-
-    let minutes = Math.floor(remainder / 60)
-    let seconds = remainder - minutes * 60
-
-    if (hours < 10) {
-        hours = `0${hours}`
-    }
-    if (minutes < 10) {
-        minutes = `0${minutes}`
-    }
-    if (seconds < 10) {
-        seconds = `0${seconds}`
-    }
-
-    return `${sign}${hours}:${minutes}:${seconds}`
-}
-
 function buildTwitchPlayer(nodeId, vodId) {
     const options = {
         width: "60%",
