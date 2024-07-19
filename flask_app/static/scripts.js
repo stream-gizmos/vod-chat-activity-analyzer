@@ -50,3 +50,41 @@ function timeDeltaToTime(td) {
 
     return `${sign}${hours}:${minutes}:${seconds}`
 }
+
+function buildTwitchPlayer(nodeId, vodId) {
+    const options = {
+        width: "60%",
+        video: vodId,
+        autoplay: false,
+        muted: false,
+    }
+
+    return new Twitch.Player(nodeId, options)
+}
+
+function buildYoutubePlayer(nodeId, vodId) {
+    return new Promise((resolve, reject) => {
+        let tries = 10
+        const youtubeLibChecker = function () {
+            if (tries < 0) {
+                clearInterval(intervalId)
+                reject('Failed to init YT lib')
+                return
+            }
+
+            tries--
+
+            if (!!window.YT?.loaded) {
+                clearInterval(intervalId)
+                resolve(new YT.Player(nodeId, {
+                    width: "60%",
+                    videoId: vodId,
+                    playerVars: {
+                        autoplay: 0,
+                    },
+                }))
+            }
+        }
+        const intervalId = setInterval(youtubeLibChecker, 100)
+    })
+}

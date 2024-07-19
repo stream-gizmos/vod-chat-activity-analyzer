@@ -58,41 +58,19 @@
                 {% if graph_data.platform == "twitch" and graph_data.vod_id %}
                     (function () {
                         const vodId = "{{ graph_data.vod_id | safe }}"
-                        const options = {
-                            width: "60%",
-                            video: vodId,
-                            autoplay: false,
-                            muted: false,
-                        }
-                        const player = new Twitch.Player("twitch-player-{{ alias }}", options)
+                        const player = buildTwitchPlayer("twitch-player-{{ alias }}", vodId)
 
                         const $plot = document.getElementById("{{ alias }}")
                         onPointClick($plot, seconds => player.seek(seconds))
                     })();
                 {% endif %}
                 {% if graph_data.platform == "youtube" and graph_data.vod_id %}
-                    (function () {
-                        const youtubeLibChecker = function () {
-                            if (!!window.YT?.loaded) {
-                                clearInterval(intervalId)
-                                embedYoutubeVideo()
-                            }
-                        }
-                        const intervalId = setInterval(youtubeLibChecker, 200)
+                    (async function () {
+                        const vodId = "{{ graph_data.vod_id | safe }}"
+                        const player = await buildYoutubePlayer("youtube-player-{{ alias }}", vodId)
 
-                        const embedYoutubeVideo = function () {
-                            const vodId = "{{ graph_data.vod_id | safe }}"
-                            const player = new YT.Player("youtube-player-{{ alias }}", {
-                                width: "60%",
-                                videoId: vodId,
-                                playerVars: {
-                                    autoplay: 0,
-                                },
-                            })
-
-                            const $plot = document.getElementById("{{ alias }}")
-                            onPointClick($plot, seconds => player.seekTo(seconds))
-                        }
+                        const $plot = document.getElementById("{{ alias }}")
+                        onPointClick($plot, seconds => player.seekTo(seconds))
                     })();
                 {% endif %}
             {% endfor %}
