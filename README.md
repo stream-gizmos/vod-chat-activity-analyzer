@@ -18,16 +18,32 @@ The visualizations are particularly useful for streamers who want to understand 
 
 ### Local Setup
 
-1. Clone this repository to your local machine.
-2. Install the required Python packages listed in `requirements.txt`. It's recommended to do this in a virtual environment.
-3. Run `web_app.py` to start the Flask server.
+First of all, clone this repository to your local machine.
+
+Then try to use Docker Compose to start the web-application:
+
+```shell
+git clone <repo URL>
+cp compose.override-example.yaml compose.override.yaml
+cp .env.example .env
+docker compose up -d
+```
+
+If you don't have the Docker Engine, then you can run the project via a local Python:
+
+1. Install the [`virtualenv`](https://virtualenv.pypa.io/en/latest/user_guide.html) package to isolate the project dependencies: `pip install virtualenv`
+2. Init the virtual environment: `python -m virtualenv venv`
+3. Activate the virtual environment: `.\venv\Scripts\activate`
+2. Install the dependencies: `pip install -r requirements.txt`
+3. Start the web-server: `python web_app.py`
 4. Visit http://localhost:8080 in your web browser to view the application.
 
 ### User Guide
 
-1. On the homepage, enter the URL of the Twitch VOD whose chat activity you want to analyze.
+1. On the homepage, enter the URL of a Twitch/YouTube VOD whose chat activity you want to analyze.
 2. Click the "Find how fast your chat was!" button. The application will start downloading the chat history and processing it.
 3. Once the data processing is done, you will be redirected to a page that displays the visualization of the chat activity. You can hover over the graph to see the exact number of messages at any given time point.
+4. You can click the button to show a video player, then Shift+Click on the chart to navigate the video to this time.
 
 ## Known Limitations
 
