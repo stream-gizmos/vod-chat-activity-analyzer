@@ -1,13 +1,21 @@
+/**
+ * @param {string} nodeId
+ * @return {boolean}
+ */
 function isVisible(nodeId) {
     const $container = document.querySelector(`#${nodeId}`)
 
     if (!$container) {
-        return
+        return false
     }
 
     return !$container.classList.contains("hidden")
 }
 
+/**
+ * @param {string} nodeId
+ * @return {void}
+ */
 function toggleVisibility(nodeId) {
     const $container = document.querySelector(`#${nodeId}`)
 
@@ -15,11 +23,7 @@ function toggleVisibility(nodeId) {
         return
     }
 
-    if (!isVisible(nodeId)) {
-        $container.classList.remove("hidden")
-    } else {
-        $container.classList.add("hidden")
-    }
+    $container.classList.toggle("hidden")
 }
 
 function onPointClick($plot, handler) {

@@ -1,10 +1,11 @@
 import json
 import socket
+from collections import defaultdict
 from contextlib import closing
 from datetime import timedelta, datetime
 from hashlib import md5
 from itertools import islice
-from typing import TypeVar
+from typing import Callable, TypeVar
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -13,6 +14,7 @@ from plotly.graph_objs import Figure
 from plotly.subplots import make_subplots
 
 IntervalWindow = TypeVar('IntervalWindow', str, int)
+PlainType = TypeVar('PlainType', str, int, float, bool)
 
 ANY_EMOTE = 'ANY EMOTE'
 
@@ -42,6 +44,39 @@ def find_free_port() -> int:
         s.bind(("", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
+
+
+def sort_dict_items(result: dict, **kwargs) -> dict:
+    return dict(sorted(result.items(), **kwargs))
+
+
+def sort_dict(
+        top: dict[str, PlainType],
+        *,
+        keys_key: Callable | None = None,
+        keys_reverse: bool | None = False,
+        values_key: Callable | None = None,
+        values_reverse: bool | None = False,
+        # **kwargs,
+) -> dict[str, PlainType]:
+    if keys_reverse is values_reverse is None:
+        raise Exception("At least one sort criteria must be specified")
+
+    group_by_count = defaultdict(list)
+    for k, v in top.items():
+        group_by_count[v].append(k)
+
+    if values_reverse is not None:
+        group_by_count = sort_dict_items(group_by_count, key=values_key, reverse=values_reverse)
+
+    if keys_reverse is not None:
+        group_by_count = {k: sorted(v, key=keys_key, reverse=keys_reverse) for k, v in group_by_count.items()}
+
+    return {
+        emote: count
+        for count, emotes in group_by_count.items()
+        for emote in emotes
+    }
 
 
 # https://stackoverflow.com/questions/7160737/how-to-validate-a-url-in-python-malformed-or-not
@@ -155,7 +190,7 @@ def build_emoticons_dataframes(
     # Discard rare emotes
     buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
     # Sort by frequency
-    buffer = dict(reversed(sorted(buffer.items(), key=lambda x: len(x[1]))))
+    buffer = sort_dict_items(buffer, key=lambda x: len(x[1]), reverse=True)
 
     result = {}
     for emote, timestamps in buffer.items():
