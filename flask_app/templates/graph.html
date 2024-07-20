@@ -98,10 +98,6 @@
                     })();
                 {% endif %}
             {% endfor %}
-
-            {% for alias, graph_data in graphs.items() %}
-                Plotly.relayout("{{ alias }}", {})
-            {% endfor %}
         })
     </script>
 {% endblock %}
