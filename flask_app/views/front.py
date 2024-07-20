@@ -135,8 +135,8 @@ def display_graph(video_hashes):
         graphs[f"vod{i:02d}"] = dict(
             hash=video_hash,
             plotly=graph_json,
-            emoticons_top=json.dumps(emoticons_top),
-            selected_emoticons=json.dumps(list(emoticons_dfs.keys())),
+            emoticons_top=list(emoticons_top.items()),
+            selected_emoticons=list(emoticons_dfs.keys()),
             **vod_url_data,
         )
 
@@ -180,8 +180,8 @@ def display_graph(video_hashes):
         graphs[f"vod{0:02d}"] = dict(
             hash="combined",
             plotly=graph_json,
-            emoticons_top=json.dumps(emoticons_top),
-            selected_emoticons=json.dumps(list(emoticons_dfs.keys())),
+            emoticons_top=list(emoticons_top.items()),
+            selected_emoticons=list(emoticons_dfs.keys()),
             caption="Combined stream stats",
         )
 

@@ -65,8 +65,8 @@
                     const plotly = {{ graph_data.plotly | safe }}
                     Plotly.newPlot("{{ alias }}", plotly.data, plotly.layout, plotlyConfig)
 
-                    const emoticonsTop = {{ graph_data.emoticons_top | safe }}
-                    const selectedEmoticons = {{ graph_data.selected_emoticons | safe }}
+                    const emoticonsTop = Object.fromEntries({{ graph_data.emoticons_top | tojson }})
+                    const selectedEmoticons = {{ graph_data.selected_emoticons | tojson }}
                     fillList("emoticons-list-{{ alias }}", "{{ graph_data.hash }}", emoticonsTop, selectedEmoticons)
                 })();
 
