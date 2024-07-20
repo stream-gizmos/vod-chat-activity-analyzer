@@ -1,3 +1,8 @@
+body {
+    /* To fix plotly width issue in Chrome */
+    overflow-y: scroll;
+}
+
 h1, h2, h3, h4, h5 {
     margin-bottom: 0;
 }
@@ -20,11 +25,32 @@ h1, h2, h3, h4, h5 {
     border: 0;
 }
 
+.emoticons-container {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.emoticons-container ol {
+    list-style-position: inside;
+    padding: 0;
+    columns: 6;
+}
+
+.emoticons-container ol > li {
+    margin-bottom: .25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .player-container {
+    margin-top: 1rem;
+}
+
+.player-container > div {
     min-width: 500px;
     width: 600px;
     max-width: 95vw;
-    margin-top: 1rem;
 }
 
 .js-plotly-plot {

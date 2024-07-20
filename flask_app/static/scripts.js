@@ -1,13 +1,21 @@
+/**
+ * @param {string} nodeId
+ * @return {boolean}
+ */
 function isVisible(nodeId) {
     const $container = document.querySelector(`#${nodeId}`)
 
     if (!$container) {
-        return
+        return false
     }
 
     return !$container.classList.contains("hidden")
 }
 
+/**
+ * @param {string} nodeId
+ * @return {void}
+ */
 function toggleVisibility(nodeId) {
     const $container = document.querySelector(`#${nodeId}`)
 
@@ -15,11 +23,17 @@ function toggleVisibility(nodeId) {
         return
     }
 
-    if (!isVisible(nodeId)) {
-        $container.classList.remove("hidden")
-    } else {
-        $container.classList.add("hidden")
-    }
+    $container.classList.toggle("hidden")
+}
+
+/**
+ * @param {string} text
+ * @return {string}
+ */
+function normalizeId(text) {
+    return text
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9]/g, '-')
 }
 
 function onPointClick($plot, handler) {
@@ -75,4 +89,31 @@ function buildYoutubePlayer(nodeId, vodId) {
         }
         const intervalId = setInterval(youtubeLibChecker, 100)
     })
+}
+
+/**
+ *
+ * @param {string} nodeId
+ * @param {string} videoHash
+ * @param {object} emoticons
+ * @param {string[]} selected
+ * @return {void}
+ */
+function fillList(nodeId, videoHash, emoticons, selected) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    for (let emote in emoticons) {
+        const itemId = normalizeId(`${nodeId}-${emote}`)
+        const item = `<li>
+            <input id="${itemId}" type="checkbox" name="emoticons[${videoHash}][]" value="${emote}"/>
+            <label for="${itemId}">${emote}
+            <small>${emoticons[emote]}</small>
+        </li>`
+        $container.insertAdjacentHTML("beforeend", item)
+        document.querySelector(`#${itemId}`).checked = selected.includes(emote)
+    }
 }

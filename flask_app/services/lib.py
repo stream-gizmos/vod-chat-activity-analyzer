@@ -1,10 +1,6 @@
-import json
-import socket
-from contextlib import closing
 from datetime import timedelta, datetime
 from hashlib import md5
 from itertools import islice
-from typing import TypeVar
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -12,7 +8,13 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 from plotly.subplots import make_subplots
 
-IntervalWindow = TypeVar('IntervalWindow', str, int)
+from flask_app.services.utils import (
+    IntervalWindow,
+    humanize_timedelta,
+    normalize_timeline,
+    sort_dict,
+    sort_dict_items,
+)
 
 ANY_EMOTE = 'ANY EMOTE'
 
@@ -35,22 +37,6 @@ def hash_to_timestamps_file(video_hash: str) -> str:
 
 def hash_to_emoticons_file(video_hash: str) -> str:
     return f"data/{video_hash}_emoticons.json"
-
-
-def find_free_port() -> int:
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
-
-
-# https://stackoverflow.com/questions/7160737/how-to-validate-a-url-in-python-malformed-or-not
-def is_http_url(url):
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc]) and (result.scheme == "http" or result.scheme == "https")
-    except ValueError:
-        return False
 
 
 def parse_vod_url(url: str) -> dict:
@@ -80,14 +66,6 @@ def parse_vod_url(url: str) -> dict:
     }
 
 
-def read_json_file(file_path):
-    try:
-        with open(file_path, "r") as fp:
-            return json.load(fp)
-    except FileNotFoundError:
-        return None
-
-
 def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=["timestamp"])
 
@@ -99,20 +77,6 @@ def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
     df.sort_index(inplace=True)
 
     return df
-
-
-def normalize_timeline(df: pd.DataFrame, time_step: int) -> pd.DataFrame:
-    # Resample the data into N second bins, filling in any missing seconds with 0
-    return df.resample(f"{time_step}s").sum()
-
-
-def make_buckets(df: pd.DataFrame, windows: list[IntervalWindow]) -> dict[IntervalWindow, pd.DataFrame]:
-    result = {}
-    for interval in windows:
-        df_resampled = df.rolling(interval).sum()
-        result[interval] = df_resampled
-
-    return result
 
 
 def get_custom_emoticons() -> set[str]:
@@ -137,14 +101,38 @@ def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: 
     return {word for word in message.split(" ") if word in emoticons}
 
 
+def count_emoticons_top(
+        emoticons_timestamps: dict[str, list[int]],
+        top_size: int | None = 5,
+        min_occurrences: int | None = 5,
+) -> dict[str, int]:
+    result = {k: len(timestamps) for k, timestamps in emoticons_timestamps.items()}
+
+    result = sort_dict(result, values_key=lambda x: x[0], values_reverse=True)
+
+    if min_occurrences is not None:
+        result = {k: v for k, v in result.items() if v >= min_occurrences}
+
+    if top_size is not None:
+        result = {k: v for k, v in islice(result.items(), top_size)}
+
+    result = {ANY_EMOTE: sum(result.values()), **result}
+
+    return result
+
+
 def build_emoticons_dataframes(
         emoticons_timestamps: dict[str, list[int]],
         time_step: int,
-        top_size: int = 5,
-        min_occurrences: int = 5,
+        top_size: int | None = 5,
+        min_occurrences: int | None = 5,
+        name_filter: list[str] | None = None,
 ) -> dict[str, pd.DataFrame]:
     if not len(emoticons_timestamps):
         return {}
+
+    if name_filter is None:
+        name_filter = []
 
     buffer = {k: v for k, v in emoticons_timestamps.items()}
 
@@ -153,21 +141,25 @@ def build_emoticons_dataframes(
     buffer[ANY_EMOTE] = sorted(buffer[ANY_EMOTE])
 
     # Discard rare emotes
-    buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
+    if min_occurrences is not None:
+        buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
+    # Filter out by emote name
+    if len(name_filter):
+        buffer = {k: v for k, v in buffer.items() if k in name_filter}
     # Sort by frequency
-    buffer = dict(reversed(sorted(buffer.items(), key=lambda x: len(x[1]))))
+    buffer = sort_dict_items(buffer, key=lambda x: len(x[1]), reverse=True)
 
     result = {}
     for emote, timestamps in buffer.items():
         emote_df = build_dataframe_by_timestamp(timestamps)
         emote_df = normalize_timeline(emote_df, time_step)
-        emote_df = emote_df[emote_df["messages"] >= min_occurrences]
 
         if len(emote_df) > 0:
             result[emote] = emote_df
 
     # Get N-top emotes
-    result = {k: v for k, v in islice(result.items(), top_size)}
+    if top_size is not None:
+        result = {k: v for k, v in islice(result.items(), top_size)}
 
     return result
 
@@ -324,27 +316,16 @@ def _build_time_axis_aliases(
 ) -> dict[int, str]:
     result = {}
     for seconds in range(0, points_count * time_step, time_step):
-        text = short_caption = _humanize_timedelta(seconds)
+        text = short_caption = humanize_timedelta(seconds)
 
         if seconds % 3600 == 0:
             point_timestamp = start_timestamp + timedelta(seconds=seconds)
             text = (
-                f"{short_caption}<br>" +
-                f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
-                f"{point_timestamp.strftime('%H:%M:%S')}"
+                    f"{short_caption}<br>" +
+                    f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
+                    f"{point_timestamp.strftime('%H:%M:%S')}"
             )
 
         result[seconds] = text
 
     return result
-
-
-def _humanize_timedelta(total_seconds: int | timedelta) -> str:
-    if isinstance(total_seconds, timedelta):
-        total_seconds = total_seconds.total_seconds()
-
-    sign = '-' if total_seconds < 0 else ''
-    hours, remainder = divmod(abs(total_seconds), 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    return f'{sign}{int(hours):02}:{int(minutes):02}:{int(seconds):02}'

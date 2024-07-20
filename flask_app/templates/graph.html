@@ -23,21 +23,32 @@
                 <h3>{{ loop.index0 + 1 }}. {{ graph_data.caption }}</h3>
             {% endif %}
         </div>
-        <div style="margin-top: .5rem">
-            {% if graph_data.platform %}
-                <button type="button" onclick="toggleVisibility('player-container-{{ alias }}')">Show the video</button>
-                <span>(Shift+Click on the chart to seek the video to this time, resize the player by mouse drag the bottom right corner)</span>
-            {% endif %}
-        </div>
+
+        {% if graph_data.emoticons_top | length %}
+            <div style="margin-top: .5rem">
+                <button type="button" onclick="toggleVisibility('emoticons-container-{{ alias }}')">Show emoticons</button>
+            </div>
+            <div id="emoticons-container-{{ alias }}" class="emoticons-container hidden">
+                <p>(Choose emoticons you want to see on the emoticons subchart, 6 maximum)</p>
+                <form method="get" action="">
+                    <ol id="emoticons-list-{{ alias }}"></ol>
+                    <input type="submit" value="Filter"/>
+                    <input type="reset" value="Deselect all"/>
+                </form>
+                <hr/>
+            </div>
+        {% endif %}
 
         {% if graph_data.platform %}
-            <div id="player-container-{{ alias }}" class="player-container resizable hidden">
-                {% if graph_data.platform == "twitch" %}
-                    <div id="twitch-player-{{ alias }}" class="twitch-player"></div>
-                {% endif %}
-                {% if graph_data.platform == "youtube" %}
-                    <div id="youtube-player-{{ alias }}" class="youtube-player"></div>
-                {% endif %}
+            <div style="margin-top: .5rem">
+                <button type="button" onclick="toggleVisibility('player-container-{{ alias }}')">Show the video</button>
+            </div>
+            <div id="player-container-{{ alias }}" class="player-container hidden">
+                <p>(Shift+Click on the chart to seek the video to this time, resize the player by mouse drag the bottom right corner)</p>
+                <div class="resizable">
+                    <div id="{{ graph_data.platform }}-player-{{ alias }}" class="{{ graph_data.platform }}-player"></div>
+                </div>
+                <hr/>
             </div>
         {% endif %}
 
@@ -52,14 +63,18 @@
         document.addEventListener("DOMContentLoaded", () => {
             {% for alias, graph_data in graphs.items() %}
                 (function () {
-                    const {{ alias }} = {{ graph_data.json | safe }}
-                    Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, plotlyConfig)
+                    const plotly = {{ graph_data.plotly | safe }}
+                    Plotly.newPlot("{{ alias }}", plotly.data, plotly.layout, plotlyConfig)
+
+                    const emoticonsTop = Object.fromEntries({{ graph_data.emoticons_top | tojson }})
+                    const selectedEmoticons = {{ graph_data.selected_emoticons | tojson }}
+                    fillList("emoticons-list-{{ alias }}", "{{ graph_data.hash }}", emoticonsTop, selectedEmoticons)
                 })();
 
                 {% if graph_data.platform == "twitch" and graph_data.vod_id %}
                     (function () {
                         const vodId = "{{ graph_data.vod_id }}"
-                        const player = buildTwitchPlayer("twitch-player-{{ alias }}", vodId)
+                        const player = buildTwitchPlayer("{{ graph_data.platform }}-player-{{ alias }}", vodId)
 
                         const $plot = document.getElementById("{{ alias }}")
                         onPointClick($plot, seconds => {
@@ -72,7 +87,7 @@
                 {% if graph_data.platform == "youtube" and graph_data.vod_id %}
                     (async function () {
                         const vodId = "{{ graph_data.vod_id }}"
-                        const player = await buildYoutubePlayer("youtube-player-{{ alias }}", vodId)
+                        const player = await buildYoutubePlayer("{{ graph_data.platform }}-player-{{ alias }}", vodId)
 
                         const $plot = document.getElementById("{{ alias }}")
                         onPointClick($plot, seconds => {
@@ -83,6 +98,6 @@
                     })();
                 {% endif %}
             {% endfor %}
-        });
+        })
     </script>
 {% endblock %}
