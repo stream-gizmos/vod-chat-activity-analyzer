@@ -128,7 +128,7 @@ def display_graph(video_hashes):
         vod_url_data = parse_vod_url(meta["url"])
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{i:02d}"] = dict(
-            json=graph_json,
+            plotly=graph_json,
             emoticons_top=json.dumps(emoticons_top),
             **vod_url_data,
         )
@@ -168,7 +168,7 @@ def display_graph(video_hashes):
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{0:02d}"] = dict(
-            json=graph_json,
+            plotly=graph_json,
             emoticons_top=json.dumps(emoticons_top),
             caption='Combined stream stats',
         )

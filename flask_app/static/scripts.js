@@ -80,3 +80,27 @@ function buildYoutubePlayer(nodeId, vodId) {
         const intervalId = setInterval(youtubeLibChecker, 100)
     })
 }
+
+/**
+ *
+ * @param {string} nodeId
+ * @param {object} emoticons
+ * @return {void}
+ */
+function fillList(nodeId, emoticons) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    for (let emote in emoticons) {
+        const itemId = `${nodeId}-${emote}`
+        const item = `<li>
+            <input id="${itemId}" type="checkbox"/>
+            <label for="${itemId}">${emote}
+            <small>${emoticons[emote]}</small>
+        </li>`
+        $container.insertAdjacentHTML("beforeend", item)
+    }
+}
