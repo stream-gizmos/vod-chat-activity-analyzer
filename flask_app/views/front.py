@@ -150,7 +150,8 @@ def display_graph(video_hashes):
                 combined_emoticons[emote].extend(timestamps)
 
     if len(video_hashes) > 1 and combined_messages_df is not None:
-        emoticons_filter = get_emoticons_filter("combined")
+        video_hash = "combined"
+        emoticons_filter = get_emoticons_filter(video_hash)
 
         messages_df = normalize_timeline(combined_messages_df, messages_time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
@@ -178,7 +179,7 @@ def display_graph(video_hashes):
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{0:02d}"] = dict(
-            hash="combined",
+            hash=video_hash,
             plotly=graph_json,
             emoticons_top=list(emoticons_top.items()),
             selected_emoticons=list(emoticons_dfs.keys()),
