@@ -96,11 +96,15 @@ def display_graph(video_hashes):
     emoticons_min_occurrences = 5
     emoticons_top_size = 6
 
+    get_emoticons_filter = lambda x: request.args.getlist(f"emoticons[{x}][]")
+
     combined_messages_df: pd.DataFrame | None = None
     combined_emoticons: dict[str, list[int]] = {}
 
     graphs = {}
     for i, video_hash in enumerate(video_hashes, start=1):
+        emoticons_filter = get_emoticons_filter(video_hash)
+
         meta = read_json_file(hash_to_meta_file(video_hash)) or {}
 
         messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
@@ -115,6 +119,7 @@ def display_graph(video_hashes):
             emoticons_time_step,
             top_size=emoticons_top_size,
             min_occurrences=emoticons_min_occurrences,
+            name_filter=emoticons_filter,
         )
 
         fig = build_multiplot_figure(
@@ -128,8 +133,10 @@ def display_graph(video_hashes):
         vod_url_data = parse_vod_url(meta["url"])
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{i:02d}"] = dict(
+            hash=video_hash,
             plotly=graph_json,
             emoticons_top=json.dumps(emoticons_top),
+            selected_emoticons=json.dumps(list(emoticons_dfs.keys())),
             **vod_url_data,
         )
 
@@ -143,6 +150,8 @@ def display_graph(video_hashes):
                 combined_emoticons[emote].extend(timestamps)
 
     if len(video_hashes) > 1 and combined_messages_df is not None:
+        emoticons_filter = get_emoticons_filter("combined")
+
         messages_df = normalize_timeline(combined_messages_df, messages_time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
@@ -156,6 +165,7 @@ def display_graph(video_hashes):
             emoticons_time_step,
             top_size=emoticons_top_size,
             min_occurrences=emoticons_min_occurrences,
+            name_filter=emoticons_filter,
         )
 
         fig = build_multiplot_figure(
@@ -168,9 +178,11 @@ def display_graph(video_hashes):
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{0:02d}"] = dict(
+            hash="combined",
             plotly=graph_json,
             emoticons_top=json.dumps(emoticons_top),
-            caption='Combined stream stats',
+            selected_emoticons=json.dumps(list(emoticons_dfs.keys())),
+            caption="Combined stream stats",
         )
 
     return render_template("graph.html", graphs=graphs)

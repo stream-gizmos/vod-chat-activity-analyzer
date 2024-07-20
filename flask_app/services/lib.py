@@ -126,9 +126,13 @@ def build_emoticons_dataframes(
         time_step: int,
         top_size: int | None = 5,
         min_occurrences: int | None = 5,
+        name_filter: list[str] | None = None,
 ) -> dict[str, pd.DataFrame]:
     if not len(emoticons_timestamps):
         return {}
+
+    if name_filter is None:
+        name_filter = []
 
     buffer = {k: v for k, v in emoticons_timestamps.items()}
 
@@ -139,6 +143,9 @@ def build_emoticons_dataframes(
     # Discard rare emotes
     if min_occurrences is not None:
         buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
+    # Filter out by emote name
+    if len(name_filter):
+        buffer = {k: v for k, v in buffer.items() if k in name_filter}
     # Sort by frequency
     buffer = sort_dict_items(buffer, key=lambda x: len(x[1]), reverse=True)
 

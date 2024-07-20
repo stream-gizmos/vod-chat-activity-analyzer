@@ -25,13 +25,13 @@ h1, h2, h3, h4, h5 {
     margin-top: 1rem;
 }
 
-.emoticons-container > ol {
+.emoticons-container ol {
     list-style-position: inside;
     padding: 0;
     columns: 6;
 }
 
-.emoticons-container > ol > li {
+.emoticons-container ol > li {
     margin-bottom: .25rem;
     white-space: nowrap;
     overflow: hidden;
