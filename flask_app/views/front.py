@@ -9,6 +9,7 @@ from flask_app.services.lib import (
     build_dataframe_by_timestamp,
     build_emoticons_dataframes,
     build_multiplot_figure,
+    count_emoticons_top,
     get_custom_emoticons,
     hash_to_chat_file,
     hash_to_emoticons_file,
@@ -94,6 +95,7 @@ def display_graph(video_hashes):
     messages_time_step = 15  # In seconds
     rolling_windows = [f"{1 * messages_time_step}s", f"{4 * messages_time_step}s", f"{20 * messages_time_step}s"]
     emoticons_time_step = messages_time_step * 4
+    emoticons_min_occurrences = 5
     emoticons_top_size = 6
 
     combined_messages_df: pd.DataFrame | None = None
@@ -109,10 +111,12 @@ def display_graph(video_hashes):
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
         emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
+        emoticons_top = count_emoticons_top(emoticons, top_size=None, min_occurrences=emoticons_min_occurrences)
         emoticons_dfs = build_emoticons_dataframes(
             emoticons,
             emoticons_time_step,
             top_size=emoticons_top_size,
+            min_occurrences=emoticons_min_occurrences,
         )
 
         fig = build_multiplot_figure(
@@ -127,6 +131,7 @@ def display_graph(video_hashes):
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{i:02d}"] = dict(
             json=graph_json,
+            emoticons_top=json.dumps(emoticons_top),
             **vod_url_data,
         )
 
@@ -143,10 +148,16 @@ def display_graph(video_hashes):
         messages_df = normalize_timeline(combined_messages_df, messages_time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
+        emoticons_top = count_emoticons_top(
+            combined_emoticons,
+            top_size=None,
+            min_occurrences=emoticons_min_occurrences,
+        )
         emoticons_dfs = build_emoticons_dataframes(
             combined_emoticons,
             emoticons_time_step,
             top_size=emoticons_top_size,
+            min_occurrences=emoticons_min_occurrences,
         )
 
         fig = build_multiplot_figure(
@@ -158,6 +169,10 @@ def display_graph(video_hashes):
         )
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        graphs[f"vod{0:02d}"] = dict(caption='Combined stream stats', json=graph_json)
+        graphs[f"vod{0:02d}"] = dict(
+            json=graph_json,
+            emoticons_top=json.dumps(emoticons_top),
+            caption='Combined stream stats',
+        )
 
     return render_template("graph.html", graphs=graphs)

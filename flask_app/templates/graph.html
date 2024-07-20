@@ -52,6 +52,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             {% for alias, graph_data in graphs.items() %}
                 (function () {
+                    const emoticons_top_{{ alias }} = {{ graph_data.emoticons_top | safe }}
                     const {{ alias }} = {{ graph_data.json | safe }}
                     Plotly.newPlot("{{ alias }}", {{ alias }}.data, {{ alias }}.layout, plotlyConfig)
                 })();

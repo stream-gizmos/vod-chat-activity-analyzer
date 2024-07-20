@@ -172,11 +172,31 @@ def mine_emoticons(message: str, platform_emotes: list[dict], custom_emoticons: 
     return {word for word in message.split(" ") if word in emoticons}
 
 
+def count_emoticons_top(
+        emoticons_timestamps: dict[str, list[int]],
+        top_size: int | None = 5,
+        min_occurrences: int | None = 5,
+) -> dict[str, int]:
+    result = {k: len(timestamps) for k, timestamps in emoticons_timestamps.items()}
+
+    result = sort_dict(result, values_key=lambda x: x[0], values_reverse=True)
+
+    if min_occurrences is not None:
+        result = {k: v for k, v in result.items() if v >= min_occurrences}
+
+    if top_size is not None:
+        result = {k: v for k, v in islice(result.items(), top_size)}
+
+    result = {ANY_EMOTE: sum(result.values()), **result}
+
+    return result
+
+
 def build_emoticons_dataframes(
         emoticons_timestamps: dict[str, list[int]],
         time_step: int,
-        top_size: int = 5,
-        min_occurrences: int = 5,
+        top_size: int | None = 5,
+        min_occurrences: int | None = 5,
 ) -> dict[str, pd.DataFrame]:
     if not len(emoticons_timestamps):
         return {}
@@ -188,7 +208,8 @@ def build_emoticons_dataframes(
     buffer[ANY_EMOTE] = sorted(buffer[ANY_EMOTE])
 
     # Discard rare emotes
-    buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
+    if min_occurrences is not None:
+        buffer = {k: v for k, v in buffer.items() if len(v) >= min_occurrences}
     # Sort by frequency
     buffer = sort_dict_items(buffer, key=lambda x: len(x[1]), reverse=True)
 
@@ -196,13 +217,15 @@ def build_emoticons_dataframes(
     for emote, timestamps in buffer.items():
         emote_df = build_dataframe_by_timestamp(timestamps)
         emote_df = normalize_timeline(emote_df, time_step)
-        emote_df = emote_df[emote_df["messages"] >= min_occurrences]
+        if min_occurrences is not None:
+            emote_df = emote_df[emote_df["messages"] >= min_occurrences]
 
         if len(emote_df) > 0:
             result[emote] = emote_df
 
     # Get N-top emotes
-    result = {k: v for k, v in islice(result.items(), top_size)}
+    if top_size is not None:
+        result = {k: v for k, v in islice(result.items(), top_size)}
 
     return result
 
