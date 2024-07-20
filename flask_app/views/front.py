@@ -15,14 +15,12 @@ from flask_app.services.lib import (
     hash_to_emoticons_file,
     hash_to_meta_file,
     hash_to_timestamps_file,
-    is_http_url,
-    make_buckets,
     mine_emoticons,
     normalize_timeline,
     parse_vod_url,
-    read_json_file,
     url_to_hash,
 )
+from flask_app.services.utils import is_http_url, make_buckets, read_json_file
 
 front_bp = Blueprint('front', __name__)
 

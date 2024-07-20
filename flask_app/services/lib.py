@@ -1,11 +1,6 @@
-import json
-import socket
-from collections import defaultdict
-from contextlib import closing
 from datetime import timedelta, datetime
 from hashlib import md5
 from itertools import islice
-from typing import Callable, TypeVar
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -13,8 +8,13 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 from plotly.subplots import make_subplots
 
-IntervalWindow = TypeVar('IntervalWindow', str, int)
-PlainType = TypeVar('PlainType', str, int, float, bool)
+from flask_app.services.utils import (
+    IntervalWindow,
+    humanize_timedelta,
+    normalize_timeline,
+    sort_dict,
+    sort_dict_items,
+)
 
 ANY_EMOTE = 'ANY EMOTE'
 
@@ -37,55 +37,6 @@ def hash_to_timestamps_file(video_hash: str) -> str:
 
 def hash_to_emoticons_file(video_hash: str) -> str:
     return f"data/{video_hash}_emoticons.json"
-
-
-def find_free_port() -> int:
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
-
-
-def sort_dict_items(result: dict, **kwargs) -> dict:
-    return dict(sorted(result.items(), **kwargs))
-
-
-def sort_dict(
-        top: dict[str, PlainType],
-        *,
-        keys_key: Callable | None = None,
-        keys_reverse: bool | None = False,
-        values_key: Callable | None = None,
-        values_reverse: bool | None = False,
-        # **kwargs,
-) -> dict[str, PlainType]:
-    if keys_reverse is values_reverse is None:
-        raise Exception("At least one sort criteria must be specified")
-
-    group_by_count = defaultdict(list)
-    for k, v in top.items():
-        group_by_count[v].append(k)
-
-    if values_reverse is not None:
-        group_by_count = sort_dict_items(group_by_count, key=values_key, reverse=values_reverse)
-
-    if keys_reverse is not None:
-        group_by_count = {k: sorted(v, key=keys_key, reverse=keys_reverse) for k, v in group_by_count.items()}
-
-    return {
-        emote: count
-        for count, emotes in group_by_count.items()
-        for emote in emotes
-    }
-
-
-# https://stackoverflow.com/questions/7160737/how-to-validate-a-url-in-python-malformed-or-not
-def is_http_url(url):
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc]) and (result.scheme == "http" or result.scheme == "https")
-    except ValueError:
-        return False
 
 
 def parse_vod_url(url: str) -> dict:
@@ -115,14 +66,6 @@ def parse_vod_url(url: str) -> dict:
     }
 
 
-def read_json_file(file_path):
-    try:
-        with open(file_path, "r") as fp:
-            return json.load(fp)
-    except FileNotFoundError:
-        return None
-
-
 def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=["timestamp"])
 
@@ -134,20 +77,6 @@ def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
     df.sort_index(inplace=True)
 
     return df
-
-
-def normalize_timeline(df: pd.DataFrame, time_step: int) -> pd.DataFrame:
-    # Resample the data into N second bins, filling in any missing seconds with 0
-    return df.resample(f"{time_step}s").sum()
-
-
-def make_buckets(df: pd.DataFrame, windows: list[IntervalWindow]) -> dict[IntervalWindow, pd.DataFrame]:
-    result = {}
-    for interval in windows:
-        df_resampled = df.rolling(interval).sum()
-        result[interval] = df_resampled
-
-    return result
 
 
 def get_custom_emoticons() -> set[str]:
@@ -382,27 +311,16 @@ def _build_time_axis_aliases(
 ) -> dict[int, str]:
     result = {}
     for seconds in range(0, points_count * time_step, time_step):
-        text = short_caption = _humanize_timedelta(seconds)
+        text = short_caption = humanize_timedelta(seconds)
 
         if seconds % 3600 == 0:
             point_timestamp = start_timestamp + timedelta(seconds=seconds)
             text = (
-                f"{short_caption}<br>" +
-                f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
-                f"{point_timestamp.strftime('%H:%M:%S')}"
+                    f"{short_caption}<br>" +
+                    f"{point_timestamp.strftime('%Y-%m-%d')}<br>" +
+                    f"{point_timestamp.strftime('%H:%M:%S')}"
             )
 
         result[seconds] = text
 
     return result
-
-
-def _humanize_timedelta(total_seconds: int | timedelta) -> str:
-    if isinstance(total_seconds, timedelta):
-        total_seconds = total_seconds.total_seconds()
-
-    sign = '-' if total_seconds < 0 else ''
-    hours, remainder = divmod(abs(total_seconds), 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    return f'{sign}{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
