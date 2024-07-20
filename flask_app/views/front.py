@@ -93,7 +93,7 @@ def display_graph(video_hashes):
     messages_time_step = 15  # In seconds
     rolling_windows = [f"{1 * messages_time_step}s", f"{4 * messages_time_step}s", f"{20 * messages_time_step}s"]
     emoticons_time_step = messages_time_step * 4
-    emoticons_min_occurrences = 5
+    emoticons_min_occurrences = 10
     emoticons_top_size = 6
 
     get_emoticons_filter = lambda x: request.args.getlist(f"emoticons[{x}][]")

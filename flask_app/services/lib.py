@@ -153,8 +153,6 @@ def build_emoticons_dataframes(
     for emote, timestamps in buffer.items():
         emote_df = build_dataframe_by_timestamp(timestamps)
         emote_df = normalize_timeline(emote_df, time_step)
-        if min_occurrences is not None:
-            emote_df = emote_df[emote_df["messages"] >= min_occurrences]
 
         if len(emote_df) > 0:
             result[emote] = emote_df
