@@ -1,4 +1,5 @@
 import json
+import os
 
 import pandas as pd
 import plotly
@@ -19,6 +20,7 @@ from flask_app.services.lib import (
     normalize_timeline,
     parse_vod_url,
     url_to_hash,
+    truncate_last_second_messages,
 )
 from flask_app.services.utils import is_http_url, make_buckets, read_json_file
 
@@ -57,22 +59,33 @@ def start_download():
             }
             json.dump(data, fp, indent=2)
 
-        chat = ChatDownloader().get_chat(url, output=hash_to_chat_file(video_hash))
+        chat_file_path = hash_to_chat_file(video_hash)
+
+        if os.path.isfile(chat_file_path):
+            truncated_seconds = truncate_last_second_messages(chat_file_path)
+        else:
+            truncated_seconds = None
+
+        chat = ChatDownloader().get_chat(url, output=chat_file_path, overwrite=False, start_time=truncated_seconds)
+        for _ in chat: pass
 
         messages_timestamps = []
         emoticons_timestamps: dict[str, list[int]] = {}
-        for message in chat:
-            if message["time_in_seconds"] < 0:
-                continue
+        with open(chat_file_path, "r") as fp:
+            for line in fp:
+                message = json.loads(line)
 
-            messages_timestamps.append(message["timestamp"])
+                if message["time_in_seconds"] < 0:
+                    continue
 
-            message_emotes = mine_emoticons(message["message"], message.get("emotes", []), custom_emoticons)
-            for emoticon in message_emotes:
-                if emoticon not in emoticons_timestamps:
-                    emoticons_timestamps[emoticon] = []
+                messages_timestamps.append(message["timestamp"])
 
-                emoticons_timestamps[emoticon].append(message["timestamp"])
+                message_emotes = mine_emoticons(message["message"], message.get("emotes", []), custom_emoticons)
+                for emoticon in message_emotes:
+                    if emoticon not in emoticons_timestamps:
+                        emoticons_timestamps[emoticon] = []
+
+                    emoticons_timestamps[emoticon].append(message["timestamp"])
 
         with open(hash_to_timestamps_file(video_hash), "w") as fp:
             json.dump(messages_timestamps, fp)
