@@ -71,7 +71,7 @@ def start_download():
 
         messages_timestamps = []
         emoticons_timestamps: dict[str, list[int]] = {}
-        with open(chat_file_path, "r") as fp:
+        with open(chat_file_path, "r", encoding="utf-8") as fp:
             for line in fp:
                 message = json.loads(line)
 
