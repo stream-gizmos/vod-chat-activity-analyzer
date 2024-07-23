@@ -10,6 +10,8 @@ flask_app = init_app()
 
 
 def main():
+    webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = False
+
     window = webview.create_window(
         webview_name,
         flask_app,
