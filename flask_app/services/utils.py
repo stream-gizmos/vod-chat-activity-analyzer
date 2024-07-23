@@ -1,3 +1,4 @@
+import contextlib
 import json
 import socket
 from collections import defaultdict
@@ -7,6 +8,7 @@ from typing import Callable, TypeVar
 from urllib.parse import urlparse
 
 import pandas as pd
+from filelock import FileLock
 
 IntervalWindow = TypeVar('IntervalWindow', str, int)
 PlainType = TypeVar('PlainType', str, int, float, bool)
@@ -67,6 +69,14 @@ def find_free_port() -> int:
         s.bind(("", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
+
+
+@contextlib.contextmanager
+def lock_file_path(path: str):
+    lock = FileLock(f"{path}.lock", timeout=1)
+
+    with lock:
+        yield lock
 
 
 def humanize_timedelta(total_seconds: int | timedelta) -> str:

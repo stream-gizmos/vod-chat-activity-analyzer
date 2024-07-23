@@ -3,9 +3,9 @@ import os
 
 import pandas as pd
 import plotly
-from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, request, redirect, url_for
 
+from chat_downloader import ChatDownloader
 from flask_app.services.lib import (
     build_dataframe_by_timestamp,
     build_emoticons_dataframes,
@@ -22,7 +22,7 @@ from flask_app.services.lib import (
     url_to_hash,
     truncate_last_second_messages,
 )
-from flask_app.services.utils import is_http_url, make_buckets, read_json_file
+from flask_app.services.utils import is_http_url, lock_file_path, make_buckets, read_json_file
 
 front_bp = Blueprint('front', __name__)
 
@@ -60,14 +60,14 @@ def start_download():
             json.dump(data, fp, indent=2)
 
         chat_file_path = hash_to_chat_file(video_hash)
+        with lock_file_path(chat_file_path):
+            if os.path.isfile(chat_file_path):
+                truncated_seconds = truncate_last_second_messages(chat_file_path)
+            else:
+                truncated_seconds = None
 
-        if os.path.isfile(chat_file_path):
-            truncated_seconds = truncate_last_second_messages(chat_file_path)
-        else:
-            truncated_seconds = None
-
-        chat = ChatDownloader().get_chat(url, output=chat_file_path, overwrite=False, start_time=truncated_seconds)
-        for _ in chat: pass
+            chat = ChatDownloader().get_chat(url, output=chat_file_path, overwrite=False, start_time=truncated_seconds)
+            for _ in chat: pass
 
         messages_timestamps = []
         emoticons_timestamps: dict[str, list[int]] = {}
