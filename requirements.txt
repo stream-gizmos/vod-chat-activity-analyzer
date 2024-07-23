@@ -1,4 +1,4 @@
-https://github.com/stream-gizmos/chat-downloader/archive/refs/heads/bugfix/twitch-utf8-emote-location.zip
+https://github.com/stream-gizmos/chat-downloader/archive/refs/heads/fixed-master.zip
 cryptography==42.0.8
 flask==2.3.2
 numpy==1.24.2
