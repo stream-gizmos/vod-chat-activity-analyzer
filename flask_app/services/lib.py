@@ -1,3 +1,5 @@
+import json
+import os
 from datetime import timedelta, datetime
 from hashlib import md5
 from itertools import islice
@@ -64,6 +66,51 @@ def parse_vod_url(url: str) -> dict:
         "platform": platform,
         "vod_id": vod_id,
     }
+
+
+def truncate_last_second_messages(chat_file_path) -> int | None:
+    """
+    Remove all messages from the tail of the JSONL file whose have the same second, then return this second value.
+    """
+    # Inspired by https://stackoverflow.com/a/54278929/3155344
+    with open(chat_file_path, "ab+") as fp:
+        def seek_line_back(count: int = 1) -> int:
+            while count > 0:
+                fp.seek(-2, os.SEEK_CUR)
+                while fp.read(1) != b'\n':
+                    pos = fp.seek(-2, os.SEEK_CUR)
+                    if pos == 0:
+                        return pos
+
+                count -= 1
+
+            return fp.tell()
+
+        def read_current_line_json_attr(attr: str):
+            line = fp.readline()
+            line_json = json.loads(line)
+            return line_json[attr]
+
+        try:  # catch OSError in case of a one line file
+            seek_line_back(1)
+        except OSError as e:
+            return None
+
+        last_line_seconds = int(read_current_line_json_attr("time_in_seconds"))
+
+        while True:
+            pos = seek_line_back(2)
+            line_seconds = int(read_current_line_json_attr("time_in_seconds"))
+
+            if line_seconds != last_line_seconds:
+                # Truncate to the pos because we have moved after the readline().
+                fp.truncate(fp.tell())
+                return last_line_seconds
+
+            if pos == 0:
+                # Truncate to the file beginning because the first line is also at this second.
+                fp.truncate(0)
+                return last_line_seconds
 
 
 def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:

@@ -4,7 +4,3 @@ services:
       - .:/var/app/
     ports:
       - 8080:8080
-  bundler:
-    volumes:
-      - bundler/entrypoint.sh:/entrypoint.sh
-      - .:/var/app/

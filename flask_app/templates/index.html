@@ -3,12 +3,14 @@
 {% block content %}
     <h1 style="margin-top: 0;">VOD Chat Activity Analyzer</h1>
     {% if error %}
-        <p style="color: red;">{{ error }}</p>
+        <p style="margin-top: 1rem; color: red;">{{ error }}</p>
     {% endif %}
     <form action="{{ url_for(".start_download") }}" method="POST">
-        <label for="url1">
-            Enter the same stream URLs on different platforms (Twitch/YouTube/etc):
-        </label>
+        <p style="margin-top: 1rem;">
+            <label for="url1">
+                Enter the same stream/show URLs on different platforms (Twitch/YouTube/etc):
+            </label>
+        </p>
         <ol class="vod-urls">
             <li>
                 <input type="url" id="url1" name="url[]" required/>
@@ -30,7 +32,7 @@
             </li>
         </ol>
         <p>
-            <button type="submit">Find how fast your chat was!</button>
+            <button type="submit">Analyze chats</button>
         </p>
     </form>
 {% endblock %}

@@ -2,7 +2,7 @@ import webview
 import webview.menu as wm
 
 from flask_app import init_app
-from flask_app.services.lib import find_free_port
+from flask_app.services.utils import find_free_port
 
 webview_name = "Chat Analyzer"
 
@@ -10,6 +10,8 @@ flask_app = init_app()
 
 
 def main():
+    webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = False
+
     window = webview.create_window(
         webview_name,
         flask_app,
@@ -35,8 +37,10 @@ def main():
 def build_menu():
     return [
         wm.Menu(
-            "Options",
+            "Menu",
             [
+                wm.MenuAction("Home", home),
+                wm.MenuSeparator(),
                 wm.MenuAction("Clear all cookies", clear_cookies),
                 wm.MenuSeparator(),
                 wm.MenuAction("Exit", close_window),
@@ -47,6 +51,11 @@ def build_menu():
 
 def on_start(window):
     window.maximize()
+
+
+def home():
+    window = webview.active_window()
+    window.load_url("/")
 
 
 def clear_cookies():
