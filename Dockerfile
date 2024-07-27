@@ -13,11 +13,11 @@ WORKDIR /var/app/
 
 COPY --link requirements.txt .
 
-RUN --mount=type=ssh,id=default <<EOT
+RUN --mount=type=ssh <<EOT
 set -ex
 
-mkdir -p /root/.ssh
-ssh-keyscan github.com >> /root/.ssh/known_hosts
+mkdir -p -m 0600 ~/.ssh
+ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 pip install -r requirements.txt
 EOT
