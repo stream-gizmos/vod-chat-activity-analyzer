@@ -10,7 +10,7 @@ app = init_app()
 def init_app_menu():
     menu = ApplicationMenu()
 
-    menu.add_section("vod_chat", "VOD Chat", target_url="/")
+    menu.add_section("vod_chat", "VOD Chat", target_url="/vod-chat/")
 
     g.main_menu = menu
 

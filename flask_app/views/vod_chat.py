@@ -24,18 +24,18 @@ from flask_app.services.lib import (
 )
 from flask_app.services.utils import is_http_url, lock_file_path, make_buckets, read_json_file
 
-front_bp = Blueprint('front', __name__)
+vod_chat_bp = Blueprint("vod_chat", __name__)
 
 
-@front_bp.route("/")
+@vod_chat_bp.route("/")
 def index():
     return render_template(
-        "index.html",
+        "vod_chat/index.html",
         error=request.args.get("error"),
     )
 
 
-@front_bp.route("/start_download", methods=["POST"])
+@vod_chat_bp.route("/start_download", methods=["POST"])
 def start_download():
     urls = request.form.getlist("url[]")
     urls = map(str.strip, urls)
@@ -101,7 +101,7 @@ def start_download():
     return redirect(url_for(".display_graph", video_hashes=hashes_string))
 
 
-@front_bp.route("/display_graph/<video_hashes>", methods=["GET"])
+@vod_chat_bp.route("/display_graph/<video_hashes>", methods=["GET"])
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
@@ -201,4 +201,4 @@ def display_graph(video_hashes):
             caption="Combined stream stats",
         )
 
-    return render_template("graph.html", graphs=graphs)
+    return render_template("vod_chat/graph.html", graphs=graphs)

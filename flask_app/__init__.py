@@ -1,6 +1,6 @@
 from importlib.metadata import entry_points
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 
 
 # Inspired by https://github.com/ClimenteA/pywebview-flask-boilerplate-for-python-desktop-apps.git
@@ -9,23 +9,22 @@ def init_app():
 
     app = Flask(__name__)
 
-    from flask_app.views.front import front_bp
-    app.register_blueprint(front_bp)
+    from flask_app.views.vod_chat import vod_chat_bp
+    app.register_blueprint(vod_chat_bp, url_prefix="/vod-chat")
 
-    load_blueprint_extensions(app)
+    _load_blueprint_extensions(app)
+
+    @app.route("/")
+    def index():
+        #vod_chat_bp.ur
+        return redirect(url_for("vod_chat.index"))
 
     return app
 
 
-def load_blueprint_extensions(app: Flask) -> None:
-    # Entry point groups
-    # chat_analyzer.v1.blueprints
-    # chat_analyzer.v1.vod_chat.plots
-    # chat_analyzer.v1.vod_chat.widgets
 
+def _load_blueprint_extensions(app: Flask) -> None:
     discovered_plugins = entry_points(group="chat_analyzer.v1.blueprints")
-    # from pprint import pprint
-    # pprint(discovered_plugins)
 
     if "inject_blueprint" in discovered_plugins.names:
         inject_blueprint = discovered_plugins["inject_blueprint"].load()
