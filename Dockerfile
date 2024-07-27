@@ -13,8 +13,12 @@ WORKDIR /var/app/
 
 COPY --link requirements.txt .
 
-RUN <<EOT
+RUN --mount=type=ssh,id=default <<EOT
 set -ex
+
+mkdir -p /root/.ssh
+ssh-keyscan github.com >> /root/.ssh/known_hosts
+
 pip install -r requirements.txt
 EOT
 
@@ -26,6 +30,7 @@ COPY --from=packages /usr/local/lib/python3.11/site-packages /usr/local/lib/pyth
 
 WORKDIR /var/app/
 
+COPY --from=packages /var/app/ .
 COPY --link . .
 
 VOLUME ./data

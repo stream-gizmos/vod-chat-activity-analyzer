@@ -1,5 +1,9 @@
 services:
   app:
+    # If you need access to a private GitHub repo
+    #build:
+    #  ssh:
+    #    default: /home/.../.ssh/id_rsa
     volumes:
       - .:/var/app/
     ports:
