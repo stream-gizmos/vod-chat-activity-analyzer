@@ -53,6 +53,8 @@ def start_download():
         video_hash = url_to_hash(url)
         hashes.append(video_hash)
 
+        print(f"Processing VOD {url} ({video_hash})...", flush=True)
+
         with open(hash_to_meta_file(video_hash), "w") as fp:
             data = {
                 "url": url,

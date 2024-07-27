@@ -7,6 +7,9 @@
     {% block scripts %}{% endblock %}
 </head>
 <body>
+{% if g.main_menu %}
+    {% include "main-menu.html" %}
+{% endif %}
 <main class="container">
     {% block content %}{% endblock %}
 </main>
