@@ -24,8 +24,12 @@ def _load_menu_extensions(menu: ApplicationMenu) -> None:
     discovered_extensions = entry_points(group="chat_analyzer.v1.blueprints", name="inject_menu")
 
     for extension in sorted(discovered_extensions):
-        inject_menu = extension.load()
-        inject_menu(menu)
+        try:
+            inject_menu = extension.load()
+            inject_menu(menu)
+        except Exception:
+            print(f"Failed to update main manu by '{extension.module}' extension", flush=True)
+            raise
 
 
 if __name__ == '__main__':

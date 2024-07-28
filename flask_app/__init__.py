@@ -29,7 +29,11 @@ def _load_blueprint_extensions(app: Flask) -> None:
             inject_blueprint = extension.load()
             bp: Blueprint = inject_blueprint(app)
 
-            print(f"Successfully loaded blueprint '{bp.name}' ({bp.import_name}) from '{extension.module}' extension", flush=True)
+            if bp:
+                print(
+                    f"Successfully loaded blueprint '{bp.name}' ({bp.import_name}) from '{extension.module}' extension",
+                    flush=True,
+                )
         except Exception:
             print(f"Failed to load a blueprint from '{extension.module}' extension", flush=True)
             raise
