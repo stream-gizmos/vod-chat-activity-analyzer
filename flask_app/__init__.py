@@ -1,9 +1,8 @@
 from importlib.metadata import entry_points
 
-from flask import Flask, redirect, url_for
+from flask import Blueprint, Flask, redirect, url_for
 
 
-# Inspired by https://github.com/ClimenteA/pywebview-flask-boilerplate-for-python-desktop-apps.git
 def init_app():
     """Create the app from Blueprints"""
 
@@ -16,16 +15,21 @@ def init_app():
 
     @app.route("/")
     def index():
-        #vod_chat_bp.ur
+        # TODO Make this redirect configurable on the application level.
         return redirect(url_for("vod_chat.index"))
 
     return app
 
 
-
 def _load_blueprint_extensions(app: Flask) -> None:
-    discovered_plugins = entry_points(group="chat_analyzer.v1.blueprints")
+    discovered_extensions = entry_points(group="chat_analyzer.v1.blueprints", name="inject_blueprint")
 
-    if "inject_blueprint" in discovered_plugins.names:
-        inject_blueprint = discovered_plugins["inject_blueprint"].load()
-        inject_blueprint(app)
+    for extension in sorted(discovered_extensions):
+        try:
+            inject_blueprint = extension.load()
+            bp: Blueprint = inject_blueprint(app)
+
+            print(f"Successfully loaded blueprint '{bp.name}' ({bp.import_name}) from '{extension.module}' extension", flush=True)
+        except Exception:
+            print(f"Failed to load a blueprint from '{extension.module}' extension", flush=True)
+            raise
