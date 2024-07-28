@@ -7,6 +7,9 @@ class ApplicationMenu:
         return self._menu
 
     def add_section(self, alias: str, caption: str, target_url: str | None):
+        if alias in self.menu:
+            raise Exception(f"Menu section '{alias}' already exists")
+
         self.menu[alias] = {
             "caption": caption,
             "target_url": target_url,
