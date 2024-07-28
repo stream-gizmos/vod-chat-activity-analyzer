@@ -1,3 +1,5 @@
+from importlib.metadata import entry_points
+
 from flask import g
 
 from app_context.appmenu import ApplicationMenu
@@ -12,7 +14,18 @@ def init_app_menu():
 
     menu.add_section("vod_chat", "VOD Chat", target_url="/vod-chat/")
 
+    _load_menu_extensions(menu)
+
+    # TODO Cache the value
     g.main_menu = menu
+
+
+def _load_menu_extensions(menu: ApplicationMenu) -> None:
+    discovered_extensions = entry_points(group="chat_analyzer.v1.blueprints", name="inject_menu")
+
+    for extension in sorted(discovered_extensions):
+        inject_menu = extension.load()
+        inject_menu(menu)
 
 
 if __name__ == '__main__':
