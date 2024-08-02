@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import plotly
 from chat_downloader import ChatDownloader
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, redirect, request, url_for
 
 from flask_app.services.lib import (
     build_dataframe_by_timestamp,

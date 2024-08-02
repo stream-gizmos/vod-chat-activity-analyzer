@@ -16,7 +16,7 @@ menu {
 }
 
 .container {
-    padding: 0.5rem;
+    padding: .5rem;
 }
 
 .manu-container {
@@ -28,7 +28,7 @@ menu {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .resizable {
