@@ -220,11 +220,12 @@ def build_multiplot_figure(
 ) -> Figure:
     messages_row = 1
     emoticons_row = 2 if len(emoticons_dfs) else 0
+    total_rows = max(messages_row, emoticons_row)
 
-    row_heights = [.6, .4] if emoticons_row > 0 else None
+    row_heights = [.6, .4] if total_rows == 2 else None
 
     fig = make_subplots(
-        rows=max(messages_row, emoticons_row),
+        rows=total_rows,
         cols=1,
         shared_xaxes=True,
         row_heights=row_heights,
@@ -348,8 +349,14 @@ def _multiplot_figure_layout(
         fixedrange=True,
     )
 
-    # Uncluster legends of traces of each shape.
-    # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
+    separate_subplot_legends(fig)
+
+
+def separate_subplot_legends(fig: Figure):
+    """
+    Uncluster legends of traces of each shape.
+    https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
+    """
     for l, yaxis in enumerate(fig.select_yaxes(), 1):
         legend_name = f"legend{l}"
         fig.update_layout({legend_name: dict(y=yaxis.domain[1], yanchor="top")}, showlegend=True)

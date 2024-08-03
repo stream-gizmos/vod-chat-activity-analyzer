@@ -19,8 +19,8 @@ from flask_app.services.lib import (
     mine_emoticons,
     normalize_timeline,
     parse_vod_url,
-    url_to_hash,
     truncate_last_second_messages,
+    url_to_hash,
 )
 from flask_app.services.utils import is_http_url, lock_file_path, make_buckets, read_json_file
 
@@ -121,6 +121,7 @@ def display_graph(video_hashes):
         emoticons_filter = get_emoticons_filter(video_hash)
 
         meta = read_json_file(hash_to_meta_file(video_hash)) or {}
+        vod_url_data = parse_vod_url(meta["url"])
 
         messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
         messages_df = build_dataframe_by_timestamp(messages)
@@ -145,7 +146,6 @@ def display_graph(video_hashes):
             "Video time (in minutes)",
         )
 
-        vod_url_data = parse_vod_url(meta["url"])
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{i:02d}"] = dict(
             hash=video_hash,
