@@ -231,13 +231,13 @@ def build_multiplot_figure(
         row_heights=row_heights,
         vertical_spacing=.02,
     )
-
-    append_messages_traces(fig, messages_dfs, row=messages_row, col=1)
-    fig.update_yaxes(row=messages_row, title="Messages")
     fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1))
 
+    append_messages_traces(fig, messages_dfs, row=messages_row, col=1, legend="legend1")
+    fig.update_yaxes(row=messages_row, title="Messages")
+
     if emoticons_row > 0:
-        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_step, row=emoticons_row, col=1)
+        append_emoticons_traces(fig, emoticons_dfs, emoticons_time_step, row=emoticons_row, col=1, legend="legend2")
         fig.update_yaxes(row=emoticons_row, title="Emoticons")
         fig.update_xaxes(row=emoticons_row, title=xaxis_title)
     else:
@@ -249,7 +249,12 @@ def build_multiplot_figure(
     points_count = len(any_df)
     min_time_step = min(messages_time_step, emoticons_time_step)
 
-    _multiplot_figure_layout(fig, start_timestamp, points_count, min_time_step)
+    _multiplot_figure_layout(
+        fig,
+        start_timestamp=start_timestamp,
+        points_count=points_count,
+        time_step=min_time_step,
+    )
 
     return fig
 
@@ -257,8 +262,11 @@ def build_multiplot_figure(
 def append_messages_traces(
         fig: Figure,
         messages_dfs: dict[IntervalWindow, pd.DataFrame],
-        row=None,
-        col=None,
+        *,
+        row: str | int | None = None,
+        col: str | int | None = None,
+        showlegend: bool = True,
+        legend: str | None = None,
 ) -> None:
     for line_name, df in messages_dfs.items():
         df["timestamp"] = df.index
@@ -270,6 +278,8 @@ def append_messages_traces(
             x=df.index,
             y=df["messages"],
             mode="lines",
+            showlegend=showlegend,
+            legend=legend,
         )
 
         fig.add_trace(trace, row=row, col=col)
@@ -279,8 +289,11 @@ def append_emoticons_traces(
         fig: Figure,
         emoticons_dfs: dict[str, pd.DataFrame],
         time_step: int,
-        row=None,
-        col=None,
+        *,
+        row: str | int | None = None,
+        col: str | int | None = None,
+        showlegend: bool = True,
+        legend: str | None = None,
 ) -> None:
     if not len(emoticons_dfs):
         return
@@ -296,6 +309,8 @@ def append_emoticons_traces(
             y=df["messages"],
             width=time_step,
             offset=0,
+            showlegend=showlegend,
+            legend=legend,
         )
 
         if len(emoticons_dfs) > 1 and line_name == ANY_EMOTE:
@@ -306,6 +321,7 @@ def append_emoticons_traces(
 
 def _multiplot_figure_layout(
         fig: Figure,
+        *,
         start_timestamp: datetime,
         points_count: int,
         time_step: int,
@@ -357,10 +373,12 @@ def separate_subplot_legends(fig: Figure):
     Uncluster legends of traces of each shape.
     https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
     """
+    fig.update_layout(showlegend=True)
+
     for l, yaxis in enumerate(fig.select_yaxes(), 1):
-        legend_name = f"legend{l}"
-        fig.update_layout({legend_name: dict(y=yaxis.domain[1], yanchor="top")}, showlegend=True)
-        fig.update_traces(row=l, legend=legend_name)
+        fig.update_layout({
+            f"legend{l}": dict(y=yaxis.domain[1], yanchor="top"),
+        })
 
 
 def _build_time_axis_aliases(
