@@ -222,7 +222,7 @@ def build_multiplot_figure(
     emoticons_row = 2 if len(emoticons_dfs) else 0
     total_rows = max(messages_row, emoticons_row)
 
-    row_heights = [.6, .4] if total_rows == 2 else None
+    total_height, row_heights = _calculate_chart_heights(emoticons_row > 0)
 
     fig = make_subplots(
         rows=total_rows,
@@ -251,12 +251,26 @@ def build_multiplot_figure(
 
     _multiplot_figure_layout(
         fig,
+        height=total_height,
         start_timestamp=start_timestamp,
         points_count=points_count,
         time_step=min_time_step,
     )
 
     return fig
+
+
+def _calculate_chart_heights(with_emoticons_chart: bool) -> tuple[int, list[float]]:
+    subplot_heights = [450]
+
+    if with_emoticons_chart:
+        subplot_heights.append(180)
+        subplot_heights[0] -= subplot_heights[1]
+
+    total_height = sum(subplot_heights)
+    height_fractions = list(map(lambda x: x / total_height, subplot_heights))
+
+    return total_height, height_fractions
 
 
 def append_messages_traces(
@@ -322,6 +336,7 @@ def append_emoticons_traces(
 def _multiplot_figure_layout(
         fig: Figure,
         *,
+        height: int | None = None,
         start_timestamp: datetime,
         points_count: int,
         time_step: int,
@@ -332,6 +347,7 @@ def _multiplot_figure_layout(
 
     fig.update_layout(
         autosize=True,
+        height=height,
         modebar=dict(orientation="v"),
         margin=dict(t=0, b=0, l=0, r=130),
         hoversubplots="axis",
