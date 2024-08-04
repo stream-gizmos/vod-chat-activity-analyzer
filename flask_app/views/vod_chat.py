@@ -121,7 +121,7 @@ def display_graph(video_hashes):
         emoticons_filter = get_emoticons_filter(video_hash)
 
         meta = read_json_file(hash_to_meta_file(video_hash)) or {}
-        vod_url_data = parse_vod_url(meta["url"])
+        vod_data = parse_vod_url(meta["url"])
 
         messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
         messages_df = build_dataframe_by_timestamp(messages)
@@ -144,6 +144,7 @@ def display_graph(video_hashes):
             emoticons_dfs,
             emoticons_time_step,
             "Video time (in minutes)",
+            vod_data,
         )
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -152,7 +153,7 @@ def display_graph(video_hashes):
             plotly=graph_json,
             emoticons_top=list(emoticons_top.items()),
             selected_emoticons=list(emoticons_dfs.keys()),
-            **vod_url_data,
+            **vod_data,
         )
 
         combined_messages_df = messages_df.copy() if combined_messages_df is None \

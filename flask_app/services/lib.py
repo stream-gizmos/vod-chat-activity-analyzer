@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from hashlib import md5
 from itertools import islice
 from urllib.parse import parse_qs, urlparse
@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 from plotly.subplots import make_subplots
 
+from flask_app.services.extension import VodChatFigureUpdater, load_vod_chat_figure_extensions
 from flask_app.services.utils import (
     IntervalWindow,
     humanize_timedelta,
@@ -217,12 +218,26 @@ def build_multiplot_figure(
         emoticons_dfs: dict[str, pd.DataFrame],
         emoticons_time_step: int,
         xaxis_title: str,
+        vod_data: dict | None = None,
 ) -> Figure:
+    extensions: list[VodChatFigureUpdater] = load_vod_chat_figure_extensions(
+        messages_dfs,
+        messages_time_step,
+        emoticons_dfs,
+        emoticons_time_step,
+        vod_data,
+    )
+
     messages_row = 1
     emoticons_row = 2 if len(emoticons_dfs) else 0
     total_rows = max(messages_row, emoticons_row)
 
-    total_height, row_heights = _calculate_chart_heights(emoticons_row > 0)
+    for ext in extensions:
+        requested_rows = ext.figure_total_rows
+        ext.assign_figure_rows(list(range(total_rows + 1, total_rows + 1 + requested_rows)))
+        total_rows += requested_rows
+
+    total_height, row_heights = _calculate_chart_heights(emoticons_row > 0, extensions)
 
     fig = make_subplots(
         rows=total_rows,
@@ -243,11 +258,24 @@ def build_multiplot_figure(
     else:
         fig.update_xaxes(row=messages_row, title=xaxis_title)
 
+    for ext in extensions:
+        ext.add_traces(fig, xaxis_title)
+
     any_df_key = next(iter(messages_dfs))
     any_df = messages_dfs[any_df_key]
     start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()
     points_count = len(any_df)
     min_time_step = min(messages_time_step, emoticons_time_step)
+
+    for ext in extensions:
+        ext_start_timestamp, ext_points_count, ext_min_time_step = ext.post_traces(
+            start_timestamp,
+            points_count,
+            min_time_step,
+        )
+        start_timestamp = min(start_timestamp, ext_start_timestamp)
+        points_count = max(points_count, ext_points_count)
+        min_time_step = min(min_time_step, ext_min_time_step)
 
     _multiplot_figure_layout(
         fig,
@@ -260,12 +288,18 @@ def build_multiplot_figure(
     return fig
 
 
-def _calculate_chart_heights(with_emoticons_chart: bool) -> tuple[int, list[float]]:
+def _calculate_chart_heights(
+        with_emoticons_chart: bool,
+        extensions: list[VodChatFigureUpdater],
+) -> tuple[int, list[float]]:
     subplot_heights = [450]
 
     if with_emoticons_chart:
         subplot_heights.append(180)
         subplot_heights[0] -= subplot_heights[1]
+
+    for ext in extensions:
+        subplot_heights.extend(ext.figure_subplot_heights)
 
     total_height = sum(subplot_heights)
     height_fractions = list(map(lambda x: x / total_height, subplot_heights))
