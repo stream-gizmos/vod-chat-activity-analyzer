@@ -110,9 +110,10 @@ def load_vod_chat_figure_extensions(
 
             if figure_updater:
                 print(
-                    f"Successfully loaded VOD-chat figure updater '{figure_updater.__name__}' from '{extension.module}' extension",
+                    f"Successfully loaded VOD-chat figure updater '{figure_updater_cls.__name__}' from '{extension.module}' extension",
                     flush=True,
                 )
+                result.append(figure_updater)
         except Exception:
             print(f"Failed to load a VOD-chat figure updater from '{extension.module}' extension", flush=True)
             raise
