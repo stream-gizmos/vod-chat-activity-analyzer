@@ -1,4 +1,5 @@
 from importlib.metadata import entry_points
+from os import getenv
 
 from flask import Blueprint, Flask, redirect, url_for
 
@@ -7,6 +8,7 @@ def init_app():
     """Create the app from Blueprints"""
 
     app = Flask(__name__)
+    app.secret_key = getenv("FLASK_SECRET_KEY")
 
     from flask_app.views.vod_chat import vod_chat_bp
     app.register_blueprint(vod_chat_bp, url_prefix="/vod-chat")
