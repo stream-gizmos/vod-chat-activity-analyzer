@@ -131,7 +131,7 @@ def display_graph(video_hashes):
         extensions = load_vod_chat_figure_extensions(messages, emoticons, vod_data)
         common_start_timestamp = find_minimal_start_timestamp(messages, extensions)
 
-        messages_df = build_dataframe_by_timestamp(messages, common_start_timestamp)
+        messages_df = build_dataframe_by_timestamp(messages, [common_start_timestamp])
         messages_df = normalize_timeline(messages_df, messages_time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 

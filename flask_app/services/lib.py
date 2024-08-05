@@ -114,7 +114,7 @@ def truncate_last_second_messages(chat_file_path) -> int | None:
                 return last_line_seconds
 
 
-def build_dataframe_by_timestamp(data: list[int], forced_start_timestamp: datetime | None = None) -> pd.DataFrame:
+def build_dataframe_by_timestamp(data: list[int], additional_timestamps: list[datetime] | None = None) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=["timestamp"])
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, unit="us")
@@ -123,8 +123,9 @@ def build_dataframe_by_timestamp(data: list[int], forced_start_timestamp: dateti
 
     df.set_index("timestamp", inplace=True)
 
-    if forced_start_timestamp is not None and forced_start_timestamp not in df.index:
-        df.loc[forced_start_timestamp] = 0
+    for timestamp in additional_timestamps or []:
+        if timestamp not in df.index:
+            df.loc[timestamp] = 0
 
     df.sort_index(inplace=True)
 
@@ -225,7 +226,7 @@ def build_emoticons_dataframes(
 
     result = {}
     for emote, timestamps in buffer.items():
-        emote_df = build_dataframe_by_timestamp(timestamps, forced_start_timestamp)
+        emote_df = build_dataframe_by_timestamp(timestamps, [forced_start_timestamp])
         emote_df = normalize_timeline(emote_df, time_step)
 
         if len(emote_df) > 0:
