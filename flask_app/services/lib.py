@@ -267,7 +267,7 @@ def build_multiplot_figure(
         row_heights=row_heights,
         vertical_spacing=.02,
     )
-    fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1))
+    fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1), row=total_rows, col=1)
 
     append_messages_traces(fig, messages_dfs, row=messages_row, col=1, legend="legend1")
     fig.update_yaxes(row=messages_row, title="Messages")
