@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from hashlib import md5
 from itertools import islice
 from urllib.parse import parse_qs, urlparse
@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 from plotly.subplots import make_subplots
 
-from flask_app.services.extension import VodChatFigureUpdater, load_vod_chat_figure_extensions
+from flask_app.services.extension import VodChatFigureUpdater
 from flask_app.services.utils import (
     IntervalWindow,
     humanize_timedelta,
@@ -114,7 +114,7 @@ def truncate_last_second_messages(chat_file_path) -> int | None:
                 return last_line_seconds
 
 
-def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
+def build_dataframe_by_timestamp(data: list[int], forced_start_timestamp: datetime | None = None) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=["timestamp"])
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, unit="us")
@@ -122,6 +122,10 @@ def build_dataframe_by_timestamp(data: list[int]) -> pd.DataFrame:
     df["messages"] = 1
 
     df.set_index("timestamp", inplace=True)
+
+    if forced_start_timestamp is not None and forced_start_timestamp not in df.index:
+        df.loc[forced_start_timestamp] = 0
+
     df.sort_index(inplace=True)
 
     return df
@@ -169,9 +173,31 @@ def count_emoticons_top(
     return result
 
 
+def find_minimal_start_timestamp(messages: list[int], extensions: list[VodChatFigureUpdater]) -> datetime | None:
+    result = None
+
+    if len(messages):
+        result = datetime.fromtimestamp(min(messages) / 1_000_000, timezone.utc)
+
+    for ext in extensions:
+        ext_start_timestamp = ext.find_start_timestamp()
+
+        if ext_start_timestamp is None:
+            continue
+
+        if result is None:
+            result = ext_start_timestamp
+        else:
+            result = min(ext_start_timestamp, result)
+
+    return result
+
+
 def build_emoticons_dataframes(
         emoticons_timestamps: dict[str, list[int]],
         time_step: int,
+        *,
+        forced_start_timestamp: datetime | None = None,
         top_size: int | None = 5,
         min_occurrences: int | None = 5,
         name_filter: list[str] | None = None,
@@ -199,7 +225,7 @@ def build_emoticons_dataframes(
 
     result = {}
     for emote, timestamps in buffer.items():
-        emote_df = build_dataframe_by_timestamp(timestamps)
+        emote_df = build_dataframe_by_timestamp(timestamps, forced_start_timestamp)
         emote_df = normalize_timeline(emote_df, time_step)
 
         if len(emote_df) > 0:
@@ -218,15 +244,10 @@ def build_multiplot_figure(
         emoticons_dfs: dict[str, pd.DataFrame],
         emoticons_time_step: int,
         xaxis_title: str,
-        vod_data: dict | None = None,
+        extensions: list[VodChatFigureUpdater] | None = None,
 ) -> Figure:
-    extensions: list[VodChatFigureUpdater] = load_vod_chat_figure_extensions(
-        messages_dfs,
-        messages_time_step,
-        emoticons_dfs,
-        emoticons_time_step,
-        vod_data,
-    )
+    if extensions is None:
+        extensions = []
 
     messages_row = 1
     emoticons_row = 2 if len(emoticons_dfs) else 0
@@ -266,16 +287,6 @@ def build_multiplot_figure(
     start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()
     points_count = len(any_df)
     min_time_step = min(messages_time_step, emoticons_time_step)
-
-    for ext in extensions:
-        ext_start_timestamp, ext_points_count, ext_min_time_step = ext.post_traces(
-            start_timestamp,
-            points_count,
-            min_time_step,
-        )
-        start_timestamp = min(start_timestamp, ext_start_timestamp)
-        points_count = max(points_count, ext_points_count)
-        min_time_step = min(min_time_step, ext_min_time_step)
 
     _multiplot_figure_layout(
         fig,

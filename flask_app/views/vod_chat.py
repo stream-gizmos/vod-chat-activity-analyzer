@@ -6,11 +6,13 @@ import plotly
 from chat_downloader import ChatDownloader
 from flask import Blueprint, render_template, redirect, request, url_for
 
+from flask_app.services.extension import load_vod_chat_figure_extensions
 from flask_app.services.lib import (
     build_dataframe_by_timestamp,
     build_emoticons_dataframes,
     build_multiplot_figure,
     count_emoticons_top,
+    find_minimal_start_timestamp,
     get_custom_emoticons,
     hash_to_chat_file,
     hash_to_emoticons_file,
@@ -123,16 +125,21 @@ def display_graph(video_hashes):
         meta = read_json_file(hash_to_meta_file(video_hash)) or {}
         vod_data = parse_vod_url(meta["url"])
 
-        messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
-        messages_df = build_dataframe_by_timestamp(messages)
+        messages: list[int] = read_json_file(hash_to_timestamps_file(video_hash)) or []
+        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
+
+        extensions = load_vod_chat_figure_extensions(messages, emoticons, vod_data)
+        common_start_timestamp = find_minimal_start_timestamp(messages, extensions)
+
+        messages_df = build_dataframe_by_timestamp(messages, common_start_timestamp)
         messages_df = normalize_timeline(messages_df, messages_time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
-        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
         emoticons_top = count_emoticons_top(emoticons, top_size=None, min_occurrences=emoticons_min_occurrences)
         emoticons_dfs = build_emoticons_dataframes(
             emoticons,
             emoticons_time_step,
+            forced_start_timestamp=common_start_timestamp,
             top_size=emoticons_top_size,
             min_occurrences=emoticons_min_occurrences,
             name_filter=emoticons_filter,
@@ -144,7 +151,7 @@ def display_graph(video_hashes):
             emoticons_dfs,
             emoticons_time_step,
             "Video time (in minutes)",
-            vod_data,
+            extensions,
         )
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
