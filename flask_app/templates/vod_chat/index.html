@@ -2,9 +2,19 @@
 
 {% block content %}
     <h1 style="margin-top: 0;">VOD Chat Activity Analyzer</h1>
+
     {% if error %}
-        <p style="margin-top: 1rem; color: red;">{{ error }}</p>
+        <p class="status_error">{{ error }}</p>
     {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <p class="status_success">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <form action="{{ url_for(".start_download") }}" method="post">
         <p style="margin-top: 1rem;">
             <label for="url1">

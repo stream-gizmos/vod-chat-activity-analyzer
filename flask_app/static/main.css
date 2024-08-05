@@ -37,6 +37,16 @@ menu {
     border: 0;
 }
 
+.status_success {
+    margin-top: 1rem;
+    color: limegreen;
+}
+
+.status_error {
+    margin-top: 1rem;
+    color: red;
+}
+
 .emoticons-container {
     width: 100%;
     margin-top: 1rem;
