@@ -1,10 +1,6 @@
 services:
   app:
     build: .
-    environment:
-      FLASK_ENV:
-      FLASK_DEBUG:
-      FLASK_SECRET_KEY:
     restart: always
   bundler:
     profiles: [ tools ]
