@@ -7,8 +7,20 @@ h1, h2, h3, h4, h5 {
     margin-bottom: 0;
 }
 
+menu {
+  list-style-type: none;
+  display: flex;
+  padding: 0;
+  margin: .25rem;
+  gap: .5em;
+}
+
 .container {
-    padding: 0.5rem;
+    padding: .5rem;
+}
+
+.manu-container {
+    border-bottom: 1px solid black;
 }
 
 .vod-urls input {
@@ -16,13 +28,25 @@ h1, h2, h3, h4, h5 {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .resizable {
     resize: horizontal;
     overflow: hidden;
     border: 0;
+}
+
+.result_message {
+    margin-top: 1rem;
+}
+
+.result_message.message {
+    color: limegreen;
+}
+
+.result_message.error {
+    color: red;
 }
 
 .emoticons-container {

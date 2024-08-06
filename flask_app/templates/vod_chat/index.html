@@ -1,11 +1,9 @@
 {% extends "base-layout.html" %}
 
+{% block content_title %}VOD Chat Activity Analyzer{% endblock %}
+
 {% block content %}
-    <h1 style="margin-top: 0;">VOD Chat Activity Analyzer</h1>
-    {% if error %}
-        <p style="margin-top: 1rem; color: red;">{{ error }}</p>
-    {% endif %}
-    <form action="{{ url_for(".start_download") }}" method="POST">
+    <form action="{{ url_for(".start_download") }}" method="post">
         <p style="margin-top: 1rem;">
             <label for="url1">
                 Enter the same stream/show URLs on different platforms (Twitch/YouTube/etc):

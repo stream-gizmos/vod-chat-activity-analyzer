@@ -4,13 +4,15 @@ import os
 import pandas as pd
 import plotly
 from chat_downloader import ChatDownloader
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, flash, render_template, redirect, request, url_for
 
+from flask_app.services.extension import load_vod_chat_figure_extensions
 from flask_app.services.lib import (
     build_dataframe_by_timestamp,
     build_emoticons_dataframes,
     build_multiplot_figure,
     count_emoticons_top,
+    find_minimal_start_timestamp,
     get_custom_emoticons,
     hash_to_chat_file,
     hash_to_emoticons_file,
@@ -19,23 +21,20 @@ from flask_app.services.lib import (
     mine_emoticons,
     normalize_timeline,
     parse_vod_url,
-    url_to_hash,
     truncate_last_second_messages,
+    url_to_hash,
 )
 from flask_app.services.utils import is_http_url, lock_file_path, make_buckets, read_json_file
 
-front_bp = Blueprint('front', __name__)
+vod_chat_bp = Blueprint("vod_chat", __name__)
 
 
-@front_bp.route("/")
+@vod_chat_bp.route("/")
 def index():
-    return render_template(
-        "index.html",
-        error=request.args.get("error"),
-    )
+    return render_template("vod_chat/index.html")
 
 
-@front_bp.route("/start_download", methods=["POST"])
+@vod_chat_bp.route("/start_download", methods=["POST"])
 def start_download():
     urls = request.form.getlist("url[]")
     urls = map(str.strip, urls)
@@ -44,7 +43,8 @@ def start_download():
     urls = set(urls)
 
     if not len(urls):
-        return redirect(url_for(".index", error="Wrong URLs provided"))
+        flash("Wrong URLs provided", "error")
+        return redirect(url_for(".index"))
 
     custom_emoticons = get_custom_emoticons()
 
@@ -52,6 +52,8 @@ def start_download():
     for url in sorted(urls):
         video_hash = url_to_hash(url)
         hashes.append(video_hash)
+
+        print(f"Processing VOD {url} ({video_hash})...", flush=True)
 
         with open(hash_to_meta_file(video_hash), "w") as fp:
             data = {
@@ -99,7 +101,7 @@ def start_download():
     return redirect(url_for(".display_graph", video_hashes=hashes_string))
 
 
-@front_bp.route("/display_graph/<video_hashes>", methods=["GET"])
+@vod_chat_bp.route("/display_graph/<video_hashes>", methods=["GET"])
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
 
@@ -119,17 +121,23 @@ def display_graph(video_hashes):
         emoticons_filter = get_emoticons_filter(video_hash)
 
         meta = read_json_file(hash_to_meta_file(video_hash)) or {}
+        vod_data = parse_vod_url(meta["url"])
 
-        messages = read_json_file(hash_to_timestamps_file(video_hash)) or []
-        messages_df = build_dataframe_by_timestamp(messages)
+        messages: list[int] = read_json_file(hash_to_timestamps_file(video_hash)) or []
+        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
+
+        extensions = load_vod_chat_figure_extensions(messages, emoticons, vod_data)
+        common_start_timestamp = find_minimal_start_timestamp(messages, extensions)
+
+        messages_df = build_dataframe_by_timestamp(messages, [common_start_timestamp])
         messages_df = normalize_timeline(messages_df, messages_time_step)
         rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
 
-        emoticons: dict[str, list[int]] = read_json_file(hash_to_emoticons_file(video_hash)) or {}
         emoticons_top = count_emoticons_top(emoticons, top_size=None, min_occurrences=emoticons_min_occurrences)
         emoticons_dfs = build_emoticons_dataframes(
             emoticons,
             emoticons_time_step,
+            forced_start_timestamp=common_start_timestamp,
             top_size=emoticons_top_size,
             min_occurrences=emoticons_min_occurrences,
             name_filter=emoticons_filter,
@@ -141,16 +149,16 @@ def display_graph(video_hashes):
             emoticons_dfs,
             emoticons_time_step,
             "Video time (in minutes)",
+            extensions,
         )
 
-        vod_url_data = parse_vod_url(meta["url"])
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         graphs[f"vod{i:02d}"] = dict(
             hash=video_hash,
             plotly=graph_json,
             emoticons_top=list(emoticons_top.items()),
             selected_emoticons=list(emoticons_dfs.keys()),
-            **vod_url_data,
+            **vod_data,
         )
 
         combined_messages_df = messages_df.copy() if combined_messages_df is None \
@@ -199,4 +207,4 @@ def display_graph(video_hashes):
             caption="Combined stream stats",
         )
 
-    return render_template("graph.html", graphs=graphs)
+    return render_template("vod_chat/graph.html", graphs=graphs)

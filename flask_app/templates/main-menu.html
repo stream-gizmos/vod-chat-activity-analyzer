@@ -1,0 +1,9 @@
+<div class="manu-container">
+    <menu>
+        {% for section in g.main_menu.menu.values() %}
+            <li>
+                <button onclick="window.location.href='{{ section.target_url }}'">{{ section.caption }}</button>
+            </li>
+        {% endfor %}
+    </menu>
+</div>
