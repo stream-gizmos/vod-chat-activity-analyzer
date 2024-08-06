@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import plotly
 from chat_downloader import ChatDownloader
-from flask import Blueprint, render_template, redirect, request, url_for
+from flask import Blueprint, flash, render_template, redirect, request, url_for
 
 from flask_app.services.extension import load_vod_chat_figure_extensions
 from flask_app.services.lib import (
@@ -31,10 +31,7 @@ vod_chat_bp = Blueprint("vod_chat", __name__)
 
 @vod_chat_bp.route("/")
 def index():
-    return render_template(
-        "vod_chat/index.html",
-        error=request.args.get("error"),
-    )
+    return render_template("vod_chat/index.html")
 
 
 @vod_chat_bp.route("/start_download", methods=["POST"])
@@ -46,7 +43,8 @@ def start_download():
     urls = set(urls)
 
     if not len(urls):
-        return redirect(url_for(".index", error="Wrong URLs provided"))
+        flash("Wrong URLs provided", "error")
+        return redirect(url_for(".index"))
 
     custom_emoticons = get_custom_emoticons()
 

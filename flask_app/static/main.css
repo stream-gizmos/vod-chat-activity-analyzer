@@ -37,13 +37,15 @@ menu {
     border: 0;
 }
 
-.status_success {
+.result_message {
     margin-top: 1rem;
+}
+
+.result_message.message {
     color: limegreen;
 }
 
-.status_error {
-    margin-top: 1rem;
+.result_message.error {
     color: red;
 }
 

@@ -7,9 +7,9 @@
     <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
 {% endblock %}
 
-{% block content %}
-    <h1 style="margin-top: 0;">Chat Activity Statistics</h1>
+{% block content_title %}Chat Activity Statistics{% endblock %}
 
+{% block content %}
     {% for alias, graph_data in graphs | dictsort %}
         <div id="section_{{ alias }}">
             {% if graph_data.url %}
