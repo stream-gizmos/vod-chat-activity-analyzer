@@ -9,28 +9,38 @@
                 Enter the same stream/show URLs on different platforms (Twitch/YouTube/etc):
             </label>
         </p>
+        <div>
+            <button type="button" onclick="addUrl()">More URLs</button>
+            <button type="button" onclick="removeUrl()">Less URLs</button>
+        </div>
         <ol class="vod-urls">
             <li>
                 <input type="url" id="url1" name="url[]" required/>
-            </li>
-            <li>
-                <input type="url" name="url[]"/>
-            </li>
-            <li>
-                <input type="url" name="url[]"/>
-            </li>
-            <li>
-                <input type="url" name="url[]"/>
-            </li>
-            <li>
-                <input type="url" name="url[]"/>
-            </li>
-            <li>
-                <input type="url" name="url[]"/>
             </li>
         </ol>
         <p>
             <button type="submit">Analyze chats</button>
         </p>
     </form>
+
+    <script>
+        const $vodUrls = document.querySelector('.vod-urls')
+
+        function addUrl() {
+            $vodUrls.insertAdjacentHTML(
+                "beforeend",
+                `<li><input type="url" name="url[]"/></li>`
+            )
+        }
+
+        function removeUrl() {
+            const inputs = $vodUrls.querySelectorAll("input[type=url]")
+
+            if (inputs[inputs.length - 1].id === "url1") {
+                return
+            }
+
+            $vodUrls.removeChild(inputs[inputs.length - 1].parentNode)
+        }
+    </script>
 {% endblock %}
