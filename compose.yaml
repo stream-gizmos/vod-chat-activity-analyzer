@@ -2,6 +2,10 @@ services:
   app:
     build: .
     restart: always
+  scheduler:
+    build: .
+    restart: always
+    command: [ "luigid", "--pidfile", "./data/luigid.pid", "--logdir", "./data/" ]
   bundler:
     profiles: [ tools ]
     build:

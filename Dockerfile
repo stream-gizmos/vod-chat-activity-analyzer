@@ -27,6 +27,7 @@ EOT
 FROM python:3.11-slim
 
 COPY --from=packages /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=packages /usr/local/bin/luigid /usr/local/bin/luigid
 
 WORKDIR /var/app/
 

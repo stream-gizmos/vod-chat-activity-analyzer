@@ -1,3 +1,5 @@
 *.json
 *.jsonl
 *.*.lock
+*.log
+*.pickle

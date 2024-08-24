@@ -7,4 +7,9 @@ services:
     volumes:
       - .:/var/app/
     ports:
-      - 8080:8080
+      - "8080:8080"
+  scheduler:
+    volumes:
+      - .:/var/app/
+    ports:
+      - "8082:8082"
