@@ -18,7 +18,7 @@ The visualizations are particularly useful for streamers who want to understand 
 
 ### Local Setup
 
-First of all, clone this repository to your local machine.
+First, clone this repository to your local machine.
 
 Then try to use Docker Compose to start the web-application:
 
@@ -34,21 +34,21 @@ If you don't have the Docker Engine, then you can run the project via a local Py
 1. Install the [`virtualenv`](https://virtualenv.pypa.io/en/latest/user_guide.html) package to isolate the project dependencies: `pip install virtualenv`
 2. Init the virtual environment: `python -m virtualenv venv`
 3. Activate the virtual environment: `.\venv\Scripts\activate`
-2. Install the dependencies: `pip install -r requirements.txt`
-3. Start the web-server: `python web_app.py`
-4. Visit http://localhost:8080 in your web browser to view the application.
+4. Install the dependencies: `pip install -r requirements.txt`
+5. Start the web-server: `python web_app.py`
+6. Start the tasks server: `luigid --pidfile ./data/luigid.pid --logdir ./data/`
+7. Visit http://localhost:8080 in your web browser to view the application.
 
 ### User Guide
 
 1. On the homepage, enter the URL of a Twitch/YouTube VOD whose chat activity you want to analyze.
-2. Click the "Find how fast your chat was!" button. The application will start downloading the chat history and processing it.
-3. Once the data processing is done, you will be redirected to a page that displays the visualization of the chat activity. You can hover over the graph to see the exact number of messages at any given time point.
-4. You can click the button to show a video player, then Shift+Click on the chart to navigate the video to this time.
+2. Click the "Analyze chats" button. The application will start downloading the chat history and processing it.
+3. Once the data processing is done, you will see a plot and other widgets. You can hover over the graph to see the exact stats at any given time point.
+4. You can click the button to show a video player, then Shift+Click on the graph to navigate the video to this time.
 
 ## Known Limitations
 
-1. The application may not be able to handle extremely active Twitch chats that have thousands of messages per minute. In such cases, the application might timeout before it finishes downloading and processing the chat data. This issue is primarily observed with larger streams that have high chat activity.
-2. The bundled EXE file `chat-analyzer.exe` is not signed, so Microsoft Defender SmartScreen will always warn you about an unrecognized app.
+1. The bundled EXE file `chat-analyzer.exe` is not signed, so Microsoft Defender SmartScreen will always warn you about an unrecognized app.
 
 ## Technology Stack
 

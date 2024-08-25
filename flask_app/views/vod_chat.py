@@ -19,7 +19,7 @@ from flask_app.services.lib import (
     url_to_hash,
 )
 from flask_app.services.utils import is_http_url, make_buckets, read_json_file
-from flask_app.tasks.vod_chat import DumpVodChatMeta, CollectVodChatTimestamps, CollectVodChatEmoticons
+from flask_app.tasks.vod_chat import CollectVodChatEmoticons, CollectVodChatTimestamps, DumpVodChatMeta
 
 vod_chat_bp = Blueprint("vod_chat", __name__)
 
