@@ -66,14 +66,10 @@
 
     <script>
         async function fetchAndRender(url, alias) {
+            show(`loader-${alias}`)
             const response = await fetchUntilData(url, 5000)
             const graphData = await response.json()
 
-            await renderByJson(alias, graphData)
-        }
-
-        async function renderByJson(alias, graphData) {
-            show(`loader-${alias}`)
             await renderGraph(alias, graphData)
             renderEmoticons(alias, graphData)
             await renderVideoPlayer(alias, graphData)
@@ -154,10 +150,11 @@
             }
 
             const requestUrl = `${url}?${searchParams}`
+
+            show(`loader-${alias}`)
             const response = await fetchUntilData(requestUrl, 5000)
             const graphData = await response.json()
 
-            show(`loader-${alias}`)
             await renderGraph(alias, graphData)
             renderEmoticons(alias, graphData)
             hide(`loader-${alias}`)
