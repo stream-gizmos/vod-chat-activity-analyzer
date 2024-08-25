@@ -99,9 +99,7 @@ def calc_vod_graph(video_hash):
     emoticons_min_occurrences = 10
     emoticons_top_size = 6
 
-    get_emoticons_filter = lambda x: request.args.getlist(f"emoticons[{x}][]")
-
-    emoticons_filter = get_emoticons_filter(video_hash)
+    emoticons_filter = request.args.getlist(f"emoticons[]")
 
     vod_data = parse_vod_url(meta["url"])
 
@@ -155,8 +153,6 @@ def calc_combined_vod_graph(video_hashes):
     emoticons_min_occurrences = 10
     emoticons_top_size = 6
 
-    get_emoticons_filter = lambda x: request.args.getlist(f"emoticons[{x}][]")
-
     combined_messages_df: pd.DataFrame | None = None
     combined_emoticons: dict[str, list[int]] = {}
 
@@ -182,8 +178,7 @@ def calc_combined_vod_graph(video_hashes):
             else:
                 combined_emoticons[emote].extend(timestamps)
 
-    video_hash = "combined"
-    emoticons_filter = get_emoticons_filter(video_hash)
+    emoticons_filter = request.args.getlist(f"emoticons[]")
 
     messages_df = normalize_timeline(combined_messages_df, messages_time_step)
     rolling_messages_dfs = make_buckets(messages_df, rolling_windows)

@@ -34,7 +34,12 @@
             </div>
             <div id="emoticons-container-{{ alias }}" class="emoticons-container hidden">
                 <p>(Choose emoticons you want to see on the emoticons subchart, 6 maximum)</p>
-                <form method="get" action="">
+                <form
+                        method="get"
+                        action=""
+                        onsubmit="handleEmoticonsForm(this, '{{ alias }}'); return false;"
+                        data-url="{{ vod_data.data_url }}"
+                >
                     <ol id="emoticons-list-{{ alias }}"></ol>
                     <input type="submit" value="Filter"/>
                     <input type="reset" value="Deselect all"/>
@@ -60,29 +65,44 @@
     {% endfor %}
 
     <script>
-        async function fetchAndRender(url, hash, alias) {
+        async function fetchAndRender(url, alias) {
             const response = await fetch(url)
             const graphData = await response.json()
 
-            Plotly.newPlot(alias, graphData.plotly.data, graphData.plotly.layout, {
+            await renderByJson(alias, graphData)
+        }
+
+        async function renderByJson(alias, graphData) {
+            show(`loader-${alias}`)
+            await renderGraph(alias, graphData)
+            renderEmoticons(alias, graphData)
+            await renderVideoPlayer(alias, graphData)
+            hide(`loader-${alias}`)
+        }
+
+        async function renderGraph(alias, graphData) {
+            await Plotly.react(alias, graphData.plotly.data, graphData.plotly.layout, {
                 modeBarButtonsToRemove: ['select', 'lasso2d'],
             })
+        }
 
+        function renderEmoticons(alias, graphData) {
+            hide(`emoticons-widget-${alias}`)
             const emoticonsTop = Object.fromEntries(graphData.emoticons_top)
-            fillList(
+            fillEmoticonsList(
                 `emoticons-list-${alias}`,
-                hash,
                 emoticonsTop,
                 graphData.selected_emoticons,
             )
             show(`emoticons-widget-${alias}`)
+        }
 
+        async function renderVideoPlayer(alias, graphData) {
             if (graphData.platform) {
+                hide(`player-widget-${alias}`)
                 await initVideoPlayer(graphData.platform, graphData.vod_id, alias)
                 show(`player-widget-${alias}`)
             }
-
-            hide(`loader-${alias}`)
         }
 
         async function initVideoPlayer(platform, vodId, alias) {
@@ -118,9 +138,34 @@
             })
         }
 
+        async function handleEmoticonsForm(form, alias) {
+            const url = form.getAttribute("data-url")
+            const formData = getFormValues(form)
+
+            const searchParams = new URLSearchParams()
+            for (const param in formData) {
+                if (Array.isArray(formData[param])) {
+                    for (const value of formData[param]) {
+                        searchParams.append(param, value)
+                    }
+                } else {
+                    searchParams.append(param, formData[param])
+                }
+            }
+
+            const requestUrl = `${url}?${searchParams}`
+            const response = await fetch(requestUrl)
+            const graphData = await response.json()
+
+            show(`loader-${alias}`)
+            await renderGraph(alias, graphData)
+            renderEmoticons(alias, graphData)
+            hide(`loader-${alias}`)
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             {% for alias, vod_data in vods.items() %}
-                fetchAndRender("{{ vod_data.data_url }}", "{{ vod_data.hash }}", "{{ alias }}")
+                fetchAndRender("{{ vod_data.data_url }}", "{{ alias }}")
             {% endfor %}
         })
     </script>

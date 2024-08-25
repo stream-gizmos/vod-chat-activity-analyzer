@@ -62,6 +62,22 @@ function normalizeId(text) {
         .replace(/[^a-zA-Z0-9]/g, '-')
 }
 
+// https://stackoverflow.com/a/70847387/3155344
+function getFormValues(form) {
+    const formData = new FormData(form)
+
+    const result = {}
+    for (const [name, value] of formData.entries()) {
+        if (name.endsWith('[]')) {
+            result[name] = result[name] ? [...result[name], value] : [value]
+        } else {
+            result[name] = value
+        }
+    }
+
+    return result
+}
+
 function onPointClick($plot, handler) {
     $plot.on("plotly_click", function (data) {
         if (!data.event.shiftKey) {
@@ -120,22 +136,23 @@ function buildYoutubePlayer(nodeId, vodId) {
 /**
  *
  * @param {string} nodeId
- * @param {string} videoHash
  * @param {object} emoticons
  * @param {string[]} selected
  * @return {void}
  */
-function fillList(nodeId, videoHash, emoticons, selected) {
+function fillEmoticonsList(nodeId, emoticons, selected) {
     const $container = document.querySelector(`#${nodeId}`)
 
     if (!$container) {
         return
     }
 
+    $container.replaceChildren()
+
     for (let emote in emoticons) {
         const itemId = normalizeId(`${nodeId}-${emote}`)
         const item = `<li>
-            <input id="${itemId}" type="checkbox" name="emoticons[${videoHash}][]" value="${emote}"/>
+            <input id="${itemId}" type="checkbox" name="emoticons[]" value="${emote}"/>
             <label for="${itemId}">${emote}
             <small>${emoticons[emote]}</small>
         </li>`
