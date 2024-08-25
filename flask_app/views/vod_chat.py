@@ -9,6 +9,7 @@ from flask_app.services.lib import (
     build_dataframe_by_timestamp,
     build_emoticons_dataframes,
     build_multiplot_figure,
+    calc_spikes,
     count_emoticons_top,
     find_minimal_start_timestamp,
     hash_to_emoticons_file,
@@ -113,6 +114,7 @@ def calc_vod_graph(video_hash):
     messages_df = build_dataframe_by_timestamp(messages, [common_start_timestamp])
     messages_df = normalize_timeline(messages_df, messages_time_step)
     rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
+    rolling_messages_dfs["spikes"] = calc_spikes(messages_df, min_messages=5, min_spike_power=.4)
 
     emoticons_top = count_emoticons_top(emoticons, top_size=None, min_occurrences=emoticons_min_occurrences)
     emoticons_dfs = build_emoticons_dataframes(
@@ -198,6 +200,7 @@ def calc_combined_vod_graph(video_hashes):
 
     messages_df = normalize_timeline(combined_messages_df, messages_time_step)
     rolling_messages_dfs = make_buckets(messages_df, rolling_windows)
+    rolling_messages_dfs["spikes"] = calc_spikes(messages_df, min_messages=5, min_spike_power=.4)
 
     emoticons_top = count_emoticons_top(
         combined_emoticons,

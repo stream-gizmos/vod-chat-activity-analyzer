@@ -132,6 +132,35 @@ def build_dataframe_by_timestamp(data: list[int], additional_timestamps: list[da
     return df
 
 
+def calc_spikes(
+        df: pd.DataFrame,
+        *,
+        min_messages: int | None = None,
+        min_spike_power: float | None = None,
+) -> pd.DataFrame:
+    result = df.copy()
+    first_timestamp = result.index[0]
+
+    result["delta"] = result["messages"] - result["messages"].shift()
+    result.loc[first_timestamp, "delta"] = result.loc[first_timestamp, "messages"]
+
+    # Ignore acceleration loss
+    result.loc[result["delta"] < 0, "delta"] = 0
+
+    if min_messages is not None:
+        mask = result["messages"] < min_messages
+        result.loc[mask, "delta"] = 0
+
+    if min_spike_power is not None:
+        mask = result["delta"] / result["messages"] < min_spike_power
+        result.loc[mask, "delta"] = 0
+
+    result["messages"] = result["delta"].astype(int)
+    result.drop(columns=["delta"], inplace=True)
+
+    return result
+
+
 def get_custom_emoticons() -> set[str]:
     try:
         with open("emoticons.txt", "r") as fp:
@@ -271,7 +300,7 @@ def build_multiplot_figure(
     )
     fig.update_xaxes(rangeslider=dict(visible=True, thickness=.1), row=total_rows, col=1)
 
-    append_messages_traces(fig, messages_dfs, row=messages_row, col=1, legend="legend1")
+    append_messages_traces(fig, messages_dfs, row=messages_row, col=1, legend="legend1", showonly=["spikes"])
     fig.update_yaxes(row=messages_row, title="Messages")
 
     if emoticons_row > 0:
@@ -328,7 +357,11 @@ def append_messages_traces(
         col: str | int | None = None,
         showlegend: bool = True,
         legend: str | None = None,
+        showonly: list[str] | None = None,
 ) -> None:
+    if showonly is None:
+        showonly = []
+
     for line_name, df in messages_dfs.items():
         df["timestamp"] = df.index
         df["timedelta"] = (df["timestamp"] - df["timestamp"].iloc[0]) // pd.Timedelta("1s")
@@ -342,6 +375,9 @@ def append_messages_traces(
             showlegend=showlegend,
             legend=legend,
         )
+
+        if len(showonly) and line_name not in showonly:
+            trace.update(dict(visible="legendonly"))
 
         fig.add_trace(trace, row=row, col=col)
 
