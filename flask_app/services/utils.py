@@ -98,7 +98,7 @@ def normalize_timeline(df: pd.DataFrame, time_step: int) -> pd.DataFrame:
 def make_buckets(df: pd.DataFrame, windows: list[IntervalWindow]) -> dict[IntervalWindow, pd.DataFrame]:
     result = {}
     for interval in windows:
-        df_resampled = df.rolling(interval).sum()
+        df_resampled = df.rolling(interval).sum().astype(int)
         result[interval] = df_resampled
 
     return result
