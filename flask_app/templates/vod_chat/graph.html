@@ -66,7 +66,7 @@
 
     <script>
         async function fetchAndRender(url, alias) {
-            const response = await fetch(url)
+            const response = await fetchUntilData(url, 5000)
             const graphData = await response.json()
 
             await renderByJson(alias, graphData)
@@ -154,7 +154,7 @@
             }
 
             const requestUrl = `${url}?${searchParams}`
-            const response = await fetch(requestUrl)
+            const response = await fetchUntilData(requestUrl, 5000)
             const graphData = await response.json()
 
             show(`loader-${alias}`)

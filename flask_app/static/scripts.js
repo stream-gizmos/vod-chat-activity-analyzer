@@ -78,6 +78,32 @@ function getFormValues(form) {
     return result
 }
 
+async function fetchWithTimeout(url, timeout) {
+    return await fetch(url, {
+        signal: AbortSignal.timeout(timeout),
+    })
+}
+
+async function fetchUntilData(url, timeout) {
+    try {
+        const response = await fetchWithTimeout(url, timeout)
+
+        if (response.status === 202) {
+            return new Promise(resolve => {
+                setTimeout(() => resolve(fetchUntilData(url, timeout)), timeout)
+            })
+        }
+
+        return response
+    } catch (err) {
+        if (err.name === "TimeoutError") {
+            return fetchUntilData(url, timeout)
+        }
+
+        throw err
+    }
+}
+
 function onPointClick($plot, handler) {
     $plot.on("plotly_click", function (data) {
         if (!data.event.shiftKey) {

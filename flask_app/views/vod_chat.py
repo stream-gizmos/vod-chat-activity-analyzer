@@ -1,10 +1,7 @@
 import json
-import os
 
 import luigi
 import pandas as pd
-import plotly
-from chat_downloader import ChatDownloader
 from flask import Blueprint, flash, render_template, redirect, request, url_for
 
 from flask_app.services.extension import load_vod_chat_figure_extensions
@@ -14,19 +11,15 @@ from flask_app.services.lib import (
     build_multiplot_figure,
     count_emoticons_top,
     find_minimal_start_timestamp,
-    get_custom_emoticons,
-    hash_to_chat_file,
     hash_to_emoticons_file,
     hash_to_meta_file,
     hash_to_timestamps_file,
-    mine_emoticons,
     normalize_timeline,
     parse_vod_url,
-    truncate_last_second_messages,
     url_to_hash,
 )
-from flask_app.services.utils import is_http_url, lock_file_path, make_buckets, read_json_file
-from flask_app.tasks.vod_chat import DumpVodChatMeta
+from flask_app.services.utils import is_http_url, make_buckets, read_json_file
+from flask_app.tasks.vod_chat import DumpVodChatMeta, CollectVodChatTimestamps, CollectVodChatEmoticons
 
 vod_chat_bp = Blueprint("vod_chat", __name__)
 
@@ -79,9 +72,8 @@ def display_graph(video_hashes):
         )
 
     if len(video_hashes) > 1:
-        video_hash = "combined"
         vods[f"vod{0:02d}"] = dict(
-            hash=video_hash,
+            hash="combined",
             data_url=url_for(".calc_combined_vod_graph", video_hashes=",".join(video_hashes)),
             caption="Combined stats",
         )
@@ -92,6 +84,15 @@ def display_graph(video_hashes):
 @vod_chat_bp.route("/calc_vod_graph/<video_hash>", methods=["GET"])
 def calc_vod_graph(video_hash):
     meta = read_json_file(hash_to_meta_file(video_hash)) or {}
+
+    tasks = [
+        CollectVodChatTimestamps(url=meta["url"]),
+        CollectVodChatEmoticons(url=meta["url"]),
+    ]
+
+    if any(filter(lambda x: not x.complete(), tasks)):
+        luigi.build(tasks, workers=1)
+        return json.dumps({'success': True}), 202, {"Content-Type": "application/json"}
 
     messages_time_step = 15  # In seconds
     rolling_windows = [f"{1 * messages_time_step}s", f"{4 * messages_time_step}s", f"{20 * messages_time_step}s"]
@@ -146,6 +147,18 @@ def calc_combined_vod_graph(video_hashes):
 
     if len(video_hashes) == 1:
         return {}
+
+    tasks = []
+    for video_hash in video_hashes:
+        meta = read_json_file(hash_to_meta_file(video_hash)) or {}
+        tasks.extend([
+            CollectVodChatTimestamps(url=meta["url"]),
+            CollectVodChatEmoticons(url=meta["url"]),
+        ])
+
+    if any(filter(lambda x: not x.complete(), tasks)):
+        luigi.build(tasks, workers=1)
+        return json.dumps({'success': True}), 202, {"Content-Type": "application/json"}
 
     messages_time_step = 15  # In seconds
     rolling_windows = [f"{1 * messages_time_step}s", f"{4 * messages_time_step}s", f"{20 * messages_time_step}s"]
