@@ -225,8 +225,9 @@ def build_emoticons_dataframes(
     buffer = sort_dict_items(buffer, key=lambda x: len(x[1]), reverse=True)
 
     result = {}
+    additional_timestamps = [forced_start_timestamp] if forced_start_timestamp else None
     for emote, timestamps in buffer.items():
-        emote_df = build_dataframe_by_timestamp(timestamps, [forced_start_timestamp])
+        emote_df = build_dataframe_by_timestamp(timestamps, additional_timestamps)
         emote_df = normalize_timeline(emote_df, time_step)
 
         if len(emote_df) > 0:

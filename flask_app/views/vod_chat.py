@@ -156,6 +156,7 @@ def calc_combined_vod_graph(video_hashes):
     combined_messages_df: pd.DataFrame | None = None
     combined_emoticons: dict[str, list[int]] = {}
 
+    min_start_timestamp = None
     for video_hash in video_hashes:
         meta = read_json_file(hash_to_meta_file(video_hash)) or {}
         vod_data = parse_vod_url(meta["url"])
@@ -165,6 +166,8 @@ def calc_combined_vod_graph(video_hashes):
 
         extensions = load_vod_chat_figure_extensions(messages, emoticons, vod_data)
         common_start_timestamp = find_minimal_start_timestamp(messages, extensions)
+        min_start_timestamp = common_start_timestamp if min_start_timestamp is None \
+            else min(min_start_timestamp, common_start_timestamp)
 
         messages_df = build_dataframe_by_timestamp(messages, [common_start_timestamp])
         messages_df = normalize_timeline(messages_df, messages_time_step)
@@ -191,6 +194,7 @@ def calc_combined_vod_graph(video_hashes):
     emoticons_dfs = build_emoticons_dataframes(
         combined_emoticons,
         emoticons_time_step,
+        forced_start_timestamp=min_start_timestamp,
         top_size=emoticons_top_size,
         min_occurrences=emoticons_min_occurrences,
         name_filter=emoticons_filter,
