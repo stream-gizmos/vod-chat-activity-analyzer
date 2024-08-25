@@ -27,6 +27,32 @@ function toggleVisibility(nodeId) {
 }
 
 /**
+ * @param {string} nodeId
+ */
+function show(nodeId) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    $container.classList.remove("hidden")
+}
+
+/**
+ * @param {string} nodeId
+ */
+function hide(nodeId) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    $container.classList.add("hidden")
+}
+
+/**
  * @param {string} text
  * @return {string}
  */
