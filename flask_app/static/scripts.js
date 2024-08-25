@@ -27,6 +27,32 @@ function toggleVisibility(nodeId) {
 }
 
 /**
+ * @param {string} nodeId
+ */
+function show(nodeId) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    $container.classList.remove("hidden")
+}
+
+/**
+ * @param {string} nodeId
+ */
+function hide(nodeId) {
+    const $container = document.querySelector(`#${nodeId}`)
+
+    if (!$container) {
+        return
+    }
+
+    $container.classList.add("hidden")
+}
+
+/**
  * @param {string} text
  * @return {string}
  */
@@ -34,6 +60,48 @@ function normalizeId(text) {
     return text
         .replace(/\s+/g, '-')
         .replace(/[^a-zA-Z0-9]/g, '-')
+}
+
+// https://stackoverflow.com/a/70847387/3155344
+function getFormValues(form) {
+    const formData = new FormData(form)
+
+    const result = {}
+    for (const [name, value] of formData.entries()) {
+        if (name.endsWith('[]')) {
+            result[name] = result[name] ? [...result[name], value] : [value]
+        } else {
+            result[name] = value
+        }
+    }
+
+    return result
+}
+
+async function fetchWithTimeout(url, timeout) {
+    return await fetch(url, {
+        signal: AbortSignal.timeout(timeout),
+    })
+}
+
+async function fetchUntilData(url, timeout) {
+    try {
+        const response = await fetchWithTimeout(url, timeout)
+
+        if (response.status === 202) {
+            return new Promise(resolve => {
+                setTimeout(() => resolve(fetchUntilData(url, timeout)), timeout)
+            })
+        }
+
+        return response
+    } catch (err) {
+        if (err.name === "TimeoutError") {
+            return fetchUntilData(url, timeout)
+        }
+
+        throw err
+    }
 }
 
 function onPointClick($plot, handler) {
@@ -94,22 +162,23 @@ function buildYoutubePlayer(nodeId, vodId) {
 /**
  *
  * @param {string} nodeId
- * @param {string} videoHash
  * @param {object} emoticons
  * @param {string[]} selected
  * @return {void}
  */
-function fillList(nodeId, videoHash, emoticons, selected) {
+function fillEmoticonsList(nodeId, emoticons, selected) {
     const $container = document.querySelector(`#${nodeId}`)
 
     if (!$container) {
         return
     }
 
+    $container.replaceChildren()
+
     for (let emote in emoticons) {
         const itemId = normalizeId(`${nodeId}-${emote}`)
         const item = `<li>
-            <input id="${itemId}" type="checkbox" name="emoticons[${videoHash}][]" value="${emote}"/>
+            <input id="${itemId}" type="checkbox" name="emoticons[]" value="${emote}"/>
             <label for="${itemId}">${emote}
             <small>${emoticons[emote]}</small>
         </li>`

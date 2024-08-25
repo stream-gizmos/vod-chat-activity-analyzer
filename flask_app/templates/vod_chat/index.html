@@ -42,5 +42,11 @@
 
             $vodUrls.removeChild(inputs[inputs.length - 1].parentNode)
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            for (const i of [...Array(4).keys()]) {
+                addUrl()
+            }
+        })
     </script>
 {% endblock %}
