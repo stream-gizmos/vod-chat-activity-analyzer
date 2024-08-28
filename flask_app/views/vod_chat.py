@@ -3,6 +3,7 @@ import json
 import luigi
 import pandas as pd
 from flask import Blueprint, flash, render_template, redirect, request, url_for
+from luigi.task import flatten, flatten_output
 
 from flask_app.services.extension import load_vod_chat_figure_extensions
 from flask_app.services.lib import (
@@ -20,7 +21,12 @@ from flask_app.services.lib import (
     url_to_hash,
 )
 from flask_app.services.utils import is_http_url, make_buckets, read_json_file
-from flask_app.tasks.vod_chat import CollectVodChatEmoticons, CollectVodChatTimestamps, DumpVodChatMeta
+from flask_app.tasks.vod_chat import (
+    CollectVodChatEmoticons,
+    CollectVodChatTimestamps,
+    DownloadVodChat,
+    DumpVodChatMeta,
+)
 
 vod_chat_bp = Blueprint("vod_chat", __name__)
 
@@ -57,6 +63,35 @@ def start_download():
     return redirect(url_for(".display_graph", video_hashes=hashes_string))
 
 
+@vod_chat_bp.route("/update_vod_chat/<video_hash>", methods=["POST"])
+def update_vod_chat(video_hash):
+    meta = read_json_file(hash_to_meta_file(video_hash)) or {}
+
+    download_task = DownloadVodChat(url=meta["url"])
+    download_task.move_output_for_update()
+
+    tasks_to_cleanup = [
+        CollectVodChatTimestamps(url=meta["url"]),
+        CollectVodChatEmoticons(url=meta["url"]),
+    ]
+    outputs_to_cleanup = [flatten_output(task) for task in tasks_to_cleanup]
+    outputs_to_cleanup = flatten(outputs_to_cleanup)
+
+    for output in outputs_to_cleanup:
+        if output.exists():
+            output.remove()
+
+    tasks = [
+        download_task,
+        CollectVodChatTimestamps(url=meta["url"]),
+        CollectVodChatEmoticons(url=meta["url"]),
+    ]
+
+    luigi.build(tasks, workers=1)
+
+    return json.dumps({'success': True}), 202, {"Content-Type": "application/json"}
+
+
 @vod_chat_bp.route("/display_graph/<video_hashes>", methods=["GET"])
 def display_graph(video_hashes):
     video_hashes = video_hashes.split(",")
@@ -69,6 +104,7 @@ def display_graph(video_hashes):
         vods[f"vod{i:02d}"] = dict(
             hash=video_hash,
             data_url=url_for(".calc_vod_graph", video_hash=video_hash),
+            update_url=url_for(".update_vod_chat", video_hash=video_hash),
             **vod_data,
         )
 

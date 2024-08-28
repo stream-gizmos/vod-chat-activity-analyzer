@@ -28,6 +28,16 @@
             <span class="loader"></span>
         </div>
 
+        {% if vod_data.update_url %}
+        <div id="reload-widget-{{ alias }}" class="hidden">
+            <div style="margin-top: .5rem;">
+                <button type="button" onclick="updateVodChat('{{ vod_data.update_url }}', '{{ vod_data.data_url }}', '{{ alias }}')">
+                    Reload VOD chat and recalculate stats
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
         <div id="emoticons-widget-{{ alias }}" class="hidden">
             <div style="margin-top: .5rem;">
                 <button type="button" onclick="toggleVisibility('emoticons-container-{{ alias }}')">Show emoticons</button>
@@ -66,14 +76,18 @@
 
     <script>
         async function fetchAndRender(url, alias) {
+            hide(`reload-widget-${alias}`)
             show(`loader-${alias}`)
+
             const response = await fetchUntilData(url, 5000)
             const graphData = await response.json()
 
             await renderGraph(alias, graphData)
             renderEmoticons(alias, graphData)
             await renderVideoPlayer(alias, graphData)
+
             hide(`loader-${alias}`)
+            show(`reload-widget-${alias}`)
         }
 
         async function renderGraph(alias, graphData) {
@@ -151,13 +165,32 @@
 
             const requestUrl = `${url}?${searchParams}`
 
+            await fetchAndUpdateWithoutPlayer(requestUrl, alias)
+        }
+
+        async function updateVodChat(updateUrl, dataUrl, alias) {
             show(`loader-${alias}`)
-            const response = await fetchUntilData(requestUrl, 5000)
+            hide(`reload-widget-${alias}`)
+            hide(`emoticons-widget-${alias}`)
+
+            const request = new Request(updateUrl, {method: "POST"})
+            await fetchWithTimeout(request, 10000)
+
+            await fetchAndUpdateWithoutPlayer(dataUrl, alias)
+        }
+
+        async function fetchAndUpdateWithoutPlayer(url, alias) {
+            hide(`reload-widget-${alias}`)
+            show(`loader-${alias}`)
+
+            const response = await fetchUntilData(url, 5000)
             const graphData = await response.json()
 
             await renderGraph(alias, graphData)
             renderEmoticons(alias, graphData)
+
             hide(`loader-${alias}`)
+            show(`reload-widget-${alias}`)
         }
 
         document.addEventListener("DOMContentLoaded", () => {
