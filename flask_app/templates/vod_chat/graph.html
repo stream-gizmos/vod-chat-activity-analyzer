@@ -47,8 +47,7 @@
                 <form
                         method="get"
                         action=""
-                        onsubmit="handleEmoticonsForm(this, '{{ alias }}'); return false;"
-                        data-url="{{ vod_data.data_url }}"
+                        onsubmit="handleEmoticonsForm(this, '{{ vod_data.data_url }}', '{{ alias }}'); return false;"
                 >
                     <ol id="emoticons-list-{{ alias }}"></ol>
                     <input type="submit" value="Filter"/>
@@ -148,8 +147,7 @@
             })
         }
 
-        async function handleEmoticonsForm(form, alias) {
-            const url = form.getAttribute("data-url")
+        async function handleEmoticonsForm(form, url, alias) {
             const formData = getFormValues(form)
 
             const searchParams = new URLSearchParams()
