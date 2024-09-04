@@ -1,5 +1,4 @@
 import json
-import os
 
 import luigi
 from chat_downloader import ChatDownloader
@@ -15,7 +14,6 @@ from flask_app.services.lib import (
     truncate_last_second_messages,
     url_to_hash,
 )
-from flask_app.services.utils import lock_file_path
 
 
 class DumpVodChatMeta(luigi.Task):
@@ -40,6 +38,12 @@ class DumpVodChatMeta(luigi.Task):
 class DownloadVodChat(luigi.Task):
     url = luigi.Parameter()
 
+    old_output = luigi.LocalTarget(format=UTF8, is_tmp=True)
+
+    def move_output_for_update(self):
+        if self.output().exists():
+            self.output().move(self.old_output.path, True)
+
     def requires(self):
         return DumpVodChatMeta(self.url)
 
@@ -50,22 +54,22 @@ class DownloadVodChat(luigi.Task):
         return luigi.LocalTarget(hash_to_chat_file(video_hash), UTF8)
 
     def run(self):
-        chat_file_path = str(self.output())
-        with lock_file_path(chat_file_path):
-            if os.path.isfile(chat_file_path):
-                truncated_seconds = truncate_last_second_messages(chat_file_path)
-            else:
-                truncated_seconds = None
+        if self.old_output.exists():
+            truncated_seconds = truncate_last_second_messages(self.old_output.path)
+        else:
+            truncated_seconds = None
 
-            with self.output().temporary_path() as self.temp_output_path:
-                chat = ChatDownloader().get_chat(
-                    str(self.url),
-                    output=self.temp_output_path,
-                    output_format="jsonl",
-                    overwrite=False,
-                    start_time=truncated_seconds,
-                )
-                for _ in chat: pass
+        chat = ChatDownloader().get_chat(
+            str(self.url),
+            output=self.old_output.path,
+            output_format="jsonl",
+            overwrite=False,
+            start_time=truncated_seconds,
+        )
+        for _ in chat: pass
+
+        if self.old_output.exists():
+            self.old_output.move(self.output().path, True)
 
 
 class CollectVodChatTimestamps(luigi.Task):
