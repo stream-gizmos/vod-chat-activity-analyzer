@@ -1,16 +1,19 @@
+import os
+
 import webview
 import webview.menu as wm
+from dotenv import load_dotenv
 
+from app_context.appmenu import compose_menu
 from flask_app import init_app
 from flask_app.services.utils import find_free_port
-
-webview_name = "Chat Analyzer"
-
-flask_app = init_app()
 
 
 def main():
     webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = False
+
+    webview_name = "Chat Analyzer"
+    flask_app = init_app()
 
     window = webview.create_window(
         webview_name,
@@ -69,4 +72,7 @@ def close_window():
 
 
 if __name__ == "__main__":
+    env_file_path = os.path.abspath(os.path.join(os.getcwd(), ".env"))
+    load_dotenv(dotenv_path=env_file_path)
+
     main()
