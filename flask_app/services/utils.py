@@ -16,7 +16,7 @@ PlainType = TypeVar('PlainType', str, int, float, bool)
 
 def read_json_file(file_path):
     try:
-        with open(file_path, "r") as fp:
+        with open(file_path, "r", encoding="utf-8") as fp:
             return json.load(fp)
     except FileNotFoundError:
         return None
