@@ -1,3 +1,6 @@
+from importlib.metadata import entry_points
+
+
 class ApplicationMenu:
     def __init__(self):
         self._menu: dict[str, dict] = {}
@@ -24,3 +27,24 @@ class ApplicationMenu:
             "caption": element_caption,
             "target_url": target_url,
         })
+
+
+def compose_menu() -> ApplicationMenu:
+    menu = ApplicationMenu()
+    menu.add_section("vod_chat", "VOD Chat", target_url="/vod-chat/")
+
+    _load_menu_extensions(menu)
+
+    return menu
+
+
+def _load_menu_extensions(menu: ApplicationMenu) -> None:
+    discovered_extensions = entry_points(group="chat_analyzer.v1.blueprints", name="inject_menu")
+
+    for extension in sorted(discovered_extensions):
+        try:
+            inject_menu = extension.load()
+            inject_menu(menu)
+        except Exception:
+            print(f"Failed to update main manu by '{extension.module}' extension", flush=True)
+            raise

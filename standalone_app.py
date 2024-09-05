@@ -38,32 +38,43 @@ def main():
 
 
 def build_menu():
-    return [
-        wm.Menu(
-            "Menu",
-            [
-                wm.MenuAction("Home", home),
-                wm.MenuSeparator(),
-                wm.MenuAction("Clear all cookies", clear_cookies),
-                wm.MenuSeparator(),
-                wm.MenuAction("Exit", close_window),
-            ],
-        ),
+    menu = compose_menu()
+
+    items = []
+    for alias, section in menu.menu.items():
+        items.append(wm.MenuAction(section["caption"], navigate_to(section["target_url"])))
+
+    items.extend([
+        wm.MenuSeparator(),
+        wm.MenuAction("Log out of all sites", clear_cookies),
+        wm.MenuSeparator(),
+        wm.MenuAction("Exit", close_window),
+    ])
+
+    result = [
+        wm.Menu("Menu", items),
     ]
+
+    return result
 
 
 def on_start(window):
     window.maximize()
 
 
-def home():
-    window = webview.active_window()
-    window.load_url("/")
+def navigate_to(url: str):
+    def func():
+        window = webview.active_window()
+        window.load_url(url)
+
+    return func
 
 
 def clear_cookies():
+    print("Clearing all cookies...", flush=True)
     window = webview.active_window()
     window.clear_cookies()
+    window.evaluate_js('alert("Cookies of all sites have been cleared.")')
 
 
 def close_window():
