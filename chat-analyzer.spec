@@ -1,16 +1,33 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_entry_point
 
-datas = [('flask_app/templates', 'flask_app/templates'), ('flask_app/static', 'flask_app/static')]
-datas += collect_data_files('chat_downloader.formatting')
+entry_points = [
+    "chat_analyzer.v1.blueprints",
+    "chat_analyzer.v1.vod_chat.subplots",
+]
 
+hiddenimports = []
+
+datas = [("flask_app/templates", "flask_app/templates"), ("flask_app/static", "flask_app/static")]
+datas += collect_data_files("chat_downloader.formatting")
+
+for ep in entry_points:
+    datas += collect_entry_point(ep)[0]
+    hiddenimports += collect_entry_point(ep)[1]
+
+hiddenimports = list(set(hiddenimports))
+
+for mod in hiddenimports:
+    datas += collect_data_files(mod)
+
+datas = list(set(datas))
 
 a = Analysis(
-    ['standalone_app.py'],
+    ["standalone_app.py"],
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -26,7 +43,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='chat-analyzer',
+    name="chat-analyzer",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
