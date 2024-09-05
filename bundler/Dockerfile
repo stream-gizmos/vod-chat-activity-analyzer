@@ -121,7 +121,10 @@ EOT
 
 VOLUME /src/
 WORKDIR /wine/drive_c/src/
+
+# Pre-install dependencies
 COPY --link requirements.txt /src/
+COPY --link src/ /src/src/
 
 RUN <<EOT
 #!/bin/bash
