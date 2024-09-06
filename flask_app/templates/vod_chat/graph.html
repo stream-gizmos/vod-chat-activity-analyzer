@@ -5,6 +5,7 @@
     <script type="text/javascript" src="{{ url_for("static", filename="twitch-embed-v1.js") }}" defer></script>
     <script type="text/javascript" src="https://www.youtube.com/player_api" defer></script>
     <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="video-tracker.js") }}" defer></script>
 {% endblock %}
 
 {% block content_title %}Chat Activity Statistics{% endblock %}
@@ -90,9 +91,10 @@
         }
 
         async function renderGraph(alias, graphData) {
-            await Plotly.react(alias, graphData.plotly.data, graphData.plotly.layout, {
-                modeBarButtonsToRemove: ['select', 'lasso2d'],
+            const xxx = await Plotly.react(alias, graphData.plotly.data, graphData.plotly.layout, {
+                modeBarButtonsToRemove: ["select", "lasso2d"],
             })
+            console.log("Plotly", xxx)
         }
 
         function renderEmoticons(alias, graphData) {
@@ -120,21 +122,32 @@
             const playerContainerId = `player-container-${alias}`
 
             if (platform === "twitch") {
-                await initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+                const player = await initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+
+                const tracker = new VideoTracker(alias)
+                linkVideoTrackerWithTwitch(tracker, player)
             }
+
             if (platform === "youtube") {
-                await initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+                const player = await initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+
+                //const tracker = new VideoTracker("")
+                //linkVideoTrackerWithTwitch(tracker, player)
             }
         }
 
         async function initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot) {
+            console.log("initTwitchVideoPlayer", vodId, playerNodeId, playerContainerId)
             const player = buildTwitchPlayer(playerNodeId, vodId)
+            console.log("player", player, player.addEventListener)
 
             onPointClick($plot, seconds => {
                 if (isVisible(playerContainerId)) {
                     player.seek(seconds)
                 }
             })
+
+            return player
         }
 
         async function initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot) {
@@ -145,6 +158,8 @@
                     player.seekTo(seconds)
                 }
             })
+
+            return player
         }
 
         async function handleEmoticonsForm(form, url, alias) {
