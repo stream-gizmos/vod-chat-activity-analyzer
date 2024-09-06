@@ -1,6 +1,21 @@
 const STATE_STOP = "stop"
 const STATE_PLAY = "play"
 
+const shapeName = "video-tracker"
+const shapeTemplate = {
+    "name": shapeName,
+    "type": "line",
+    "line": {
+        "dash": "dot",
+        "width": 1
+    },
+    "fillcolor": "black",
+    "opacity": 0.5,
+    "y0": 0,
+    "y1": 1,
+}
+
+
 class VideoTracker {
     #graphId
     #enabled
@@ -23,6 +38,17 @@ class VideoTracker {
         this.onStop()
     }
 
+    get graphId() {
+        return this.#graphId
+    }
+
+    /**
+     * @return {boolean}
+     */
+    get isEnabled() {
+        return this.#enabled
+    }
+
     /**
      * @param {Function} cb
      */
@@ -35,15 +61,15 @@ class VideoTracker {
     }
 
     disable() {
-        this.#enabled = true
+        this.#enabled = false
     }
 
     onPlay() {
         this.#state = STATE_PLAY
 
         clearTimeout(this.#intervalId)
-        this.#intervalId = setInterval(() => {
-            this.#refreshPosition()
+        this.#intervalId = setInterval(async () => {
+            await this.#refreshPosition()
         }, this.#refreshPeriod)
     }
 
@@ -65,10 +91,63 @@ class VideoTracker {
         return Math.floor(value * 1000) / 1000
     }
 
-    #refreshPosition() {
+    async #refreshPosition() {
         this.#seconds = this.#normalizeSeconds(this.#currentTimeCallback())
-        // console.log("refreshPosition seconds", this.#seconds)
+
+        await this.#renderShapes()
     }
+
+    #getPlotNode() {
+        return document.getElementById(this.graphId)
+    }
+
+    async #renderShapes() {
+        if (!this.isEnabled) {
+            return
+        }
+
+        const $plot = this.#getPlotNode()
+
+        const seconds = Math.floor(this.#seconds)
+        const shapes = []
+        for (const plot of getAllAxes($plot)) {
+            shapes.push({
+                ...shapeTemplate,
+                x0: seconds,
+                x1: seconds,
+                xref: plot[0],
+                yref: `${plot[1]} domain`,
+            })
+        }
+
+        if (typeof $plot.layout.shapes === "undefined") {
+            $plot.layout.shapes = []
+        }
+
+        $plot.layout.shapes = $plot.layout.shapes.filter(s => s.name !== shapeName)
+        $plot.layout.shapes.push(...shapes)
+
+        await Plotly.relayout(this.graphId, $plot.layout)
+    }
+}
+
+/**
+ * @param {Node} $plot
+ * @return {string[]}
+ */
+function getAllAxes($plot) {
+    const xAxes = Object.keys($plot.layout)
+        .filter(k => k.startsWith("xaxis"))
+
+    const result = []
+    for (const xAxis of xAxes) {
+        result.push([
+            `x${xAxis.substring(5)}`,
+            $plot.layout[xAxis].anchor,
+        ])
+    }
+
+    return result
 }
 
 /**
