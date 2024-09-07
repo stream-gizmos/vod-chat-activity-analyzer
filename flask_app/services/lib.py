@@ -313,6 +313,9 @@ def build_multiplot_figure(
     for ext in extensions:
         ext.add_traces(fig, xaxis_title)
 
+        # Without these predefined shapes, the dynamic video tracker lines glitch as fuck.
+        fig.add_vline(name="video-tracker", x=0, visible=False)
+
     any_df_key = next(iter(messages_dfs))
     any_df = messages_dfs[any_df_key]
     start_timestamp: datetime = any_df["timestamp"][0].to_pydatetime()

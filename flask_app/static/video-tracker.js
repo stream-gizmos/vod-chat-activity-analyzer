@@ -3,18 +3,17 @@ const STATE_PLAY = "play"
 
 const shapeName = "video-tracker"
 const shapeTemplate = {
-    "name": shapeName,
-    "type": "line",
-    "line": {
-        "dash": "dot",
-        "width": 1
+    name: shapeName,
+    type: "line",
+    line: {
+        dash: "dot",
+        width: 1
     },
-    "fillcolor": "black",
-    "opacity": 0.5,
-    "y0": 0,
-    "y1": 1,
+    fillcolor: "black",
+    opacity: 0.5,
+    y0: 0,
+    y1: 1,
 }
-
 
 class VideoTracker {
     #graphId
