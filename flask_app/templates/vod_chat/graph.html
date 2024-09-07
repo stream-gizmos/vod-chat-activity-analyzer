@@ -5,7 +5,6 @@
     <script type="text/javascript" src="{{ url_for("static", filename="twitch-embed-v1.js") }}" defer></script>
     <script type="text/javascript" src="https://www.youtube.com/player_api" defer></script>
     <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
-    <script type="text/javascript" src="{{ url_for("static", filename="video-tracker.js") }}" defer></script>
 {% endblock %}
 
 {% block content_title %}Chat Activity Statistics{% endblock %}
@@ -74,7 +73,13 @@
         <div id="{{ alias }}"></div>
     {% endfor %}
 
-    <script>
+    <script type="module">
+        import {
+            linkVideoTrackerWithTwitchPlayer,
+            linkVideoTrackerWithYoutubePlayer,
+            VideoTracker,
+        } from "{{ url_for("static", filename="video-tracker.js") }}"
+
         async function fetchAndRender(url, alias) {
             hide(`reload-widget-${alias}`)
             show(`loader-${alias}`)
