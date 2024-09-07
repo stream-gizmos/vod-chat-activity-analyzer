@@ -32,9 +32,9 @@ class VideoTracker {
         this.#seconds = 0
         this.#currentTimeCallback = () => {}
 
-        this.#intervalId = undefined
-        this.#refreshPeriod = 1000
+        this.#refreshPeriod = 3000
 
+        this.#clearInterval()
         this.onStop()
     }
 
@@ -67,67 +67,86 @@ class VideoTracker {
     onPlay() {
         this.#state = STATE_PLAY
 
-        clearTimeout(this.#intervalId)
-        this.#intervalId = setInterval(async () => {
-            await this.#refreshPosition()
-        }, this.#refreshPeriod)
+        setTimeout(async () => await this.#refreshPosition(this.#seconds), 0)
+
+        this.#clearInterval()
+        this.#intervalId = setInterval(async () => await this.#refreshPosition(), this.#refreshPeriod)
     }
 
     onStop() {
         this.#state = STATE_STOP
 
-        clearTimeout(this.#intervalId)
+        this.#clearInterval()
     }
 
     /**
      * @param {number} seconds
      */
     onSeek(seconds) {
-        this.#seconds = this.#normalizeSeconds(seconds)
-        // console.log("onSeek seconds", this.#seconds)
+        if (!this.#isIntervalRunning) {
+            setTimeout(async () => await this.#refreshPosition(seconds), 0)
+        }
     }
 
     #normalizeSeconds(value) {
         return Math.floor(value * 1000) / 1000
     }
 
-    async #refreshPosition() {
-        this.#seconds = this.#normalizeSeconds(this.#currentTimeCallback())
+    #clearInterval() {
+        clearInterval(this.#intervalId)
+        this.#intervalId = undefined
+    }
 
-        await this.#renderShapes()
+    /**
+     * @return {boolean}
+     */
+    get #isIntervalRunning() {
+        return !!this.#intervalId
+    }
+
+    /**
+     * @param {number} [seconds]
+     */
+    async #refreshPosition(seconds) {
+        if (typeof seconds === "undefined") {
+            seconds = this.#currentTimeCallback()
+        }
+
+        const newSeconds = this.#normalizeSeconds(seconds)
+
+        if (newSeconds === this.#seconds) {
+            return
+        }
+
+        this.#seconds = newSeconds
+
+        await this.#renderLines()
     }
 
     #getPlotNode() {
         return document.getElementById(this.graphId)
     }
 
-    async #renderShapes() {
+    async #renderLines() {
         if (!this.isEnabled) {
             return
         }
 
         const $plot = this.#getPlotNode()
-
         const seconds = Math.floor(this.#seconds)
-        const shapes = []
-        for (const plot of getAllAxes($plot)) {
-            shapes.push({
-                ...shapeTemplate,
-                x0: seconds,
-                x1: seconds,
-                xref: plot[0],
-                yref: `${plot[1]} domain`,
-            })
-        }
 
-        if (typeof $plot.layout.shapes === "undefined") {
-            $plot.layout.shapes = []
-        }
+        const newShapes = getAllAxes($plot).map(plot => ({
+            ...shapeTemplate,
+            x0: seconds,
+            x1: seconds,
+            xref: plot[0],
+            yref: `${plot[1]} domain`,
+        }))
 
-        $plot.layout.shapes = $plot.layout.shapes.filter(s => s.name !== shapeName)
-        $plot.layout.shapes.push(...shapes)
+        const shapes = ($plot.layout.shapes || []).filter(s => s.name !== shapeName)
+        shapes.push(...newShapes)
 
-        await Plotly.relayout(this.graphId, $plot.layout)
+        await Plotly.relayout(this.graphId, {shapes})
     }
 }
 
@@ -155,17 +174,12 @@ function getAllAxes($plot) {
  */
 function linkVideoTrackerWithTwitch(tracker, player) {
     player.addEventListener(Twitch.Player.PLAYING, () => {
-        console.log("Twitch.Player.PLAYING")
         tracker.onPlay()
-        tracker.onSeek(player.getCurrentTime())
     })
     player.addEventListener(Twitch.Player.PAUSE, () => {
-        console.log("Twitch.Player.PAUSE")
         tracker.onStop()
-        tracker.onSeek(player.getCurrentTime())
     })
     player.addEventListener(Twitch.Player.SEEK, ({position}) => {
-        console.log("Twitch.Player.SEEK")
         tracker.onSeek(position)
     })
 
