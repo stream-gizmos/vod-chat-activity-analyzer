@@ -171,7 +171,7 @@ function getAllAxes($plot) {
 /**
  * @param {VideoTracker} tracker
  */
-function linkVideoTrackerWithTwitch(tracker, player) {
+function linkVideoTrackerWithTwitchPlayer(tracker, player) {
     player.addEventListener(Twitch.Player.PLAYING, () => {
         tracker.onPlay()
     })
@@ -189,7 +189,7 @@ function linkVideoTrackerWithTwitch(tracker, player) {
 /**
  * @param {VideoTracker} tracker
  */
-function linkVideoTrackerWithYoutube(tracker, player) {
+function linkVideoTrackerWithYoutubePlayer(tracker, player) {
     player.addEventListener("onStateChange", ({target, data}) => {
         if (data === YT.PlayerState.PLAYING) {
             tracker.onSeek(player.getCurrentTime())

@@ -124,14 +124,14 @@
                 const player = await initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
 
                 const tracker = new VideoTracker(alias)
-                linkVideoTrackerWithTwitch(tracker, player)
+                linkVideoTrackerWithTwitchPlayer(tracker, player)
             }
 
             if (platform === "youtube") {
                 const player = await initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
 
                 const tracker = new VideoTracker(alias)
-                linkVideoTrackerWithYoutube(tracker, player)
+                linkVideoTrackerWithYoutubePlayer(tracker, player)
             }
         }
 
