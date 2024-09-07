@@ -91,10 +91,9 @@
         }
 
         async function renderGraph(alias, graphData) {
-            const xxx = await Plotly.react(alias, graphData.plotly.data, graphData.plotly.layout, {
+            await Plotly.react(alias, graphData.plotly.data, graphData.plotly.layout, {
                 modeBarButtonsToRemove: ["select", "lasso2d"],
             })
-            console.log("Plotly", xxx)
         }
 
         function renderEmoticons(alias, graphData) {
@@ -137,9 +136,7 @@
         }
 
         async function initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot) {
-            console.log("initTwitchVideoPlayer", vodId, playerNodeId, playerContainerId)
             const player = buildTwitchPlayer(playerNodeId, vodId)
-            console.log("player", player, player.addEventListener)
 
             onPointClick($plot, seconds => {
                 if (isVisible(playerContainerId)) {
