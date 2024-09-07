@@ -73,7 +73,13 @@
         <div id="{{ alias }}"></div>
     {% endfor %}
 
-    <script>
+    <script type="module">
+        import {
+            linkVideoTrackerWithTwitchPlayer,
+            linkVideoTrackerWithYoutubePlayer,
+            VideoTracker,
+        } from "{{ url_for("static", filename="video-tracker.js") }}"
+
         async function fetchAndRender(url, alias) {
             hide(`reload-widget-${alias}`)
             show(`loader-${alias}`)
@@ -91,7 +97,7 @@
 
         async function renderGraph(alias, graphData) {
             await Plotly.react(alias, graphData.plotly.data, graphData.plotly.layout, {
-                modeBarButtonsToRemove: ['select', 'lasso2d'],
+                modeBarButtonsToRemove: ["select", "lasso2d"],
             })
         }
 
@@ -120,10 +126,17 @@
             const playerContainerId = `player-container-${alias}`
 
             if (platform === "twitch") {
-                await initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+                const player = await initTwitchVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+
+                const tracker = new VideoTracker(alias)
+                linkVideoTrackerWithTwitchPlayer(tracker, player)
             }
+
             if (platform === "youtube") {
-                await initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+                const player = await initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot)
+
+                const tracker = new VideoTracker(alias)
+                linkVideoTrackerWithYoutubePlayer(tracker, player)
             }
         }
 
@@ -135,6 +148,8 @@
                     player.seek(seconds)
                 }
             })
+
+            return player
         }
 
         async function initYoutubeVideoPlayer(vodId, playerNodeId, playerContainerId, $plot) {
@@ -145,6 +160,8 @@
                     player.seekTo(seconds)
                 }
             })
+
+            return player
         }
 
         async function handleEmoticonsForm(form, url, alias) {
