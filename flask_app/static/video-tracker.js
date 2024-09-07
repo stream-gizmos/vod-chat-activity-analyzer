@@ -185,3 +185,21 @@ function linkVideoTrackerWithTwitch(tracker, player) {
     tracker.setCurrentTimeCallback(() => player.getCurrentTime())
     tracker.enable()
 }
+
+/**
+ * @param {VideoTracker} tracker
+ */
+function linkVideoTrackerWithYoutube(tracker, player) {
+    player.addEventListener("onStateChange", ({target, data}) => {
+        if (data === YT.PlayerState.PLAYING) {
+            tracker.onSeek(player.getCurrentTime())
+            tracker.onPlay()
+        }
+        if (data === YT.PlayerState.PAUSED) {
+            tracker.onStop()
+        }
+    })
+
+    tracker.setCurrentTimeCallback(() => player.getCurrentTime())
+    tracker.enable()
+}
