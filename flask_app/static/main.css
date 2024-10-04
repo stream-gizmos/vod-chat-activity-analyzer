@@ -1,3 +1,84 @@
+:root {
+    --color-background: #fff;
+    --color-text-default: #111;
+    --color-link: #06c;
+    --color-link-hover: var(--color-link);
+    --color-link-active: #e00;
+    --color-link-visited: var(--color-link);
+    --color-border: #888;
+    --color-button-background: #ddd;
+    --color-button-background-hover: #ccc;
+    --color-button-background-focus: #bbb;
+    --color-loader: #000;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #444;
+        --color-text-default: #f0f2f3;
+        --color-link: #6cf;
+        --color-border: #777;
+        --color-button-background: #222;
+        --color-button-background-hover: #333;
+        --color-button-background-focus: #444;
+        --color-loader: #fff;
+    }
+}
+
+body, button {
+    background-color: var(--color-background);
+    color: var(--color-text-default);
+}
+
+input, textarea {
+    background-color: var(--color-background);
+    padding: .1rem .2rem;
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--color-border);
+    border-radius: 2px;
+    color: var(--color-text-default);
+}
+
+a:not(.button) {
+    color: var(--color-link);
+}
+
+a:not(.button):hover {
+    color: var(--color-link-hover);
+}
+
+a:not(.button):active, a:not(.button):focus {
+    color: var(--color-link-active) !important;
+}
+
+a:not(.button):visited {
+    color: var(--color-link-visited);
+}
+
+button, .button {
+    cursor: pointer;
+    display: inline-block;
+    margin: 0;
+    padding: .25rem .5rem;
+    background-color: var(--color-button-background);
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--color-border);
+    border-radius: 4px;
+    color: var(--color-text-default);
+    font-size: 16px;
+    text-decoration: none;
+}
+
+button:hover, .button:hover {
+    background-color: var(--color-button-background-hover);
+}
+
+button:focus, .button:focus {
+    background-color: var(--color-button-background-focus);
+}
+
 body {
     /* To fix plotly width issue in Chrome */
     overflow-y: scroll;
@@ -53,7 +134,7 @@ menu {
 .loader {
     width: 48px;
     height: 48px;
-    border: 5px solid #000;
+    border: 5px solid var(--color-loader);
     border-bottom-color: transparent;
     border-radius: 50%;
     display: inline-block;
