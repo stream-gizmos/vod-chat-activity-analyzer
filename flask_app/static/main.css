@@ -99,7 +99,7 @@ menu {
 }
 
 .manu-container {
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .vod-urls input {

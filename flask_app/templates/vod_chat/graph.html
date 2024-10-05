@@ -211,7 +211,7 @@
          * @return {string}
          */
         function appendThemeParam(url) {
-            if (getCurrentTheme() === 'dark') {
+            if (siteTheme.getCurrentTheme() === 'dark') {
                 const delimiter = !url.includes('?') ? '?' : '&'
                 url += delimiter + 'theme=dark'
             }

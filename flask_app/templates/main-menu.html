@@ -15,10 +15,10 @@
     const $switcher = document.getElementById('theme-switcher')
 
     $switcher.addEventListener('click', () => {
-        setTheme(getOppositeTheme())
+        siteTheme.setTheme(siteTheme.getOppositeTheme())
     })
 
-    onThemeChange(newTheme => {
+    siteTheme.onChange(newTheme => {
         $switcher.textContent = newTheme === 'light' ? 'Dark theme' : 'Light theme'
     })
 </script>
