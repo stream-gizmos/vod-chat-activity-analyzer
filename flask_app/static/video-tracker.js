@@ -15,7 +15,7 @@ const shapeTemplate = {
     y1: 1,
 }
 
-export class VideoTracker {
+class VideoTracker {
     #graphId
     #enabled
     #seconds
@@ -171,7 +171,7 @@ function getAllAxes($plot) {
 /**
  * @param {VideoTracker} tracker
  */
-export function linkVideoTrackerWithTwitchPlayer(tracker, player) {
+function linkVideoTrackerWithTwitchPlayer(tracker, player) {
     player.addEventListener(Twitch.Player.PLAYING, () => {
         tracker.onPlay()
     })
@@ -189,7 +189,7 @@ export function linkVideoTrackerWithTwitchPlayer(tracker, player) {
 /**
  * @param {VideoTracker} tracker
  */
-export function linkVideoTrackerWithYoutubePlayer(tracker, player) {
+function linkVideoTrackerWithYoutubePlayer(tracker, player) {
     player.addEventListener("onStateChange", ({target, data}) => {
         if (data === YT.PlayerState.PLAYING) {
             tracker.onSeek(player.getCurrentTime())

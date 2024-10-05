@@ -171,6 +171,9 @@ def calc_vod_graph(video_hash):
         extensions,
     )
 
+    if _is_dark_theme_request():
+        fig.update_layout(template="plotly_dark")
+
     return dict(
         plotly=json.loads(fig.to_json()),
         emoticons_top=list(emoticons_top.items()),
@@ -260,8 +263,15 @@ def calc_combined_vod_graph(video_hashes):
         "Stream time (in minutes)",
     )
 
+    if _is_dark_theme_request():
+        fig.update_layout(template="plotly_dark")
+
     return dict(
         plotly=json.loads(fig.to_json()),
         emoticons_top=list(emoticons_top.items()),
         selected_emoticons=list(emoticons_dfs.keys()),
     )
+
+
+def _is_dark_theme_request():
+    return request.args.get("theme", "light") == "dark"

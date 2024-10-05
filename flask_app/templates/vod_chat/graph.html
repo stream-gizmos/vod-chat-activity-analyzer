@@ -4,7 +4,7 @@
     <script type="text/javascript" src="{{ url_for("static", filename="plotly-2.32.0.min.js") }}" defer></script>
     <script type="text/javascript" src="{{ url_for("static", filename="twitch-embed-v1.js") }}" defer></script>
     <script type="text/javascript" src="https://www.youtube.com/player_api" defer></script>
-    <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
+    <script type="text/javascript" src="{{ url_for("static", filename="video-tracker.js") }}" defer></script>
 {% endblock %}
 
 {% block content_title %}Chat Activity Statistics{% endblock %}
@@ -15,7 +15,7 @@
             {% if vod_data.url %}
                 <h3>
                     {{ loop.index0 + 1 }}. VOD URL:
-                    <a href="{{ vod_data.url }}" target="_blank">
+                    <a href="{{ vod_data.url }}">
                         {{ vod_data.caption or vod_data.url }}
                     </a>
                 </h3>
@@ -73,14 +73,10 @@
         <div id="{{ alias }}"></div>
     {% endfor %}
 
-    <script type="module">
-        import {
-            linkVideoTrackerWithTwitchPlayer,
-            linkVideoTrackerWithYoutubePlayer,
-            VideoTracker,
-        } from "{{ url_for("static", filename="video-tracker.js") }}"
-
+    <script>
         async function fetchAndRender(url, alias) {
+            url = appendThemeParam(url)
+
             hide(`reload-widget-${alias}`)
             show(`loader-${alias}`)
 
@@ -195,6 +191,8 @@
         }
 
         async function fetchAndUpdateWithoutPlayer(url, alias) {
+            url = appendThemeParam(url)
+
             hide(`reload-widget-${alias}`)
             show(`loader-${alias}`)
 
@@ -206,6 +204,19 @@
 
             hide(`loader-${alias}`)
             show(`reload-widget-${alias}`)
+        }
+
+        /**
+         * @param {string} url
+         * @return {string}
+         */
+        function appendThemeParam(url) {
+            if (isDarkSchemePreferred()) {
+                const delimiter = !url.includes('?') ? '?' : '&'
+                url += delimiter + 'theme=dark'
+            }
+
+            return url
         }
 
         document.addEventListener("DOMContentLoaded", () => {

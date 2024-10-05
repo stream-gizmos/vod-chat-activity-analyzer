@@ -2,7 +2,7 @@
     <menu>
         {% for section in g.main_menu.menu.values() %}
             <li>
-                <button onclick="window.location.href='{{ section.target_url }}'">{{ section.caption }}</button>
+                <a class="button" href="{{ section.target_url }}">{{ section.caption }}</a>
             </li>
         {% endfor %}
     </menu>
