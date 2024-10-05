@@ -78,6 +78,13 @@ function getFormValues(form) {
     return result
 }
 
+/**
+ * @return {boolean}
+ */
+function isDarkSchemePreferred(){
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
 async function fetchWithTimeout(url, timeout) {
     return await fetch(url, {
         signal: AbortSignal.timeout(timeout),
