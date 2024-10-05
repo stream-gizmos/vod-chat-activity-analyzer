@@ -5,5 +5,20 @@
                 <a class="button" href="{{ section.target_url }}">{{ section.caption }}</a>
             </li>
         {% endfor %}
+        <li style="margin-left: auto;">
+            <a id="theme-switcher" class="button" href="#">Change theme</a>
+        </li>
     </menu>
 </div>
+
+<script>
+    const $switcher = document.getElementById('theme-switcher')
+
+    $switcher.addEventListener('click', () => {
+        siteTheme.setTheme(siteTheme.getOppositeTheme())
+    })
+
+    siteTheme.onChange(newTheme => {
+        $switcher.textContent = newTheme === 'light' ? 'Dark theme' : 'Light theme'
+    })
+</script>

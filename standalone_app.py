@@ -46,6 +46,7 @@ def build_menu():
 
     items.extend([
         wm.MenuSeparator(),
+        wm.MenuAction("Switch color cheme", switch_theme),
         wm.MenuAction("Log out of all sites", clear_cookies),
         wm.MenuSeparator(),
         wm.MenuAction("Exit", close_window),
@@ -68,6 +69,12 @@ def navigate_to(url: str):
         window.load_url(url)
 
     return func
+
+
+def switch_theme():
+    print("Switch theme...", flush=True)
+    window = webview.active_window()
+    window.evaluate_js('siteTheme.setTheme(siteTheme.getOppositeTheme())')
 
 
 def clear_cookies():

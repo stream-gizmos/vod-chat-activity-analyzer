@@ -12,17 +12,15 @@
     --color-loader: #000;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --color-background: #444;
-        --color-text-default: #f0f2f3;
-        --color-link: #6cf;
-        --color-border: #777;
-        --color-button-background: #222;
-        --color-button-background-hover: #333;
-        --color-button-background-focus: #444;
-        --color-loader: #fff;
-    }
+.dark-theme {
+    --color-background: #444;
+    --color-text-default: #f0f2f3;
+    --color-link: #6cf;
+    --color-border: #777;
+    --color-button-background: #222;
+    --color-button-background-hover: #333;
+    --color-button-background-focus: #444;
+    --color-loader: #fff;
 }
 
 body, button {
@@ -101,7 +99,7 @@ menu {
 }
 
 .manu-container {
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .vod-urls input {
