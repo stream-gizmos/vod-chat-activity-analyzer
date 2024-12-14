@@ -96,3 +96,41 @@ def load_vod_chat_figure_extensions(
             raise
 
     return result
+
+
+class VodChatEmoticonsUpdater(ABC):
+    def __init__(self, vod_data: dict):
+        self._vod_data = vod_data
+
+        self._is_appropriate: bool = True
+
+    def add_emoticons(self) -> set:
+        if not self._is_appropriate:
+            return set()
+
+        return set(self._add_emoticons())
+
+    def _add_emoticons(self) -> list:
+        return []
+
+
+def load_vod_chat_emoticons_updater(vod_data: dict) -> list[VodChatEmoticonsUpdater]:
+    discovered_extensions = entry_points(group="chat_analyzer.v1.vod_chat.subplots", name="emoticons_updater")
+
+    result: list[VodChatEmoticonsUpdater] = []
+    for extension in sorted(discovered_extensions):
+        try:
+            emoticons_updater_cls = extension.load()
+            emoticons_updater: VodChatEmoticonsUpdater = emoticons_updater_cls(vod_data)
+
+            if emoticons_updater:
+                print(
+                    f"Successfully loaded VOD-chat emoticons updater '{emoticons_updater_cls.__name__}' from '{extension.module}' extension",
+                    flush=True,
+                )
+                result.append(emoticons_updater)
+        except Exception:
+            print(f"Failed to load a VOD-chat emoticons updater from '{extension.module}' extension", flush=True)
+            raise
+
+    return result
