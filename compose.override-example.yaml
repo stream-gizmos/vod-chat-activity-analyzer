@@ -1,15 +1,25 @@
+x-anchors:
+  - &build
+    network: host
+    # If you need access to a private GitHub repo.
+    #ssh:
+    #  default: /home/username/.ssh/id_rsa
+
 services:
   app:
-    # If you need access to a private GitHub repo
-    #build:
-    #  ssh:
-    #    default: /home/.../.ssh/id_rsa
+    build:
+      <<: *build
     volumes:
       - .:/var/app/
     ports:
       - "8080:8080"
   scheduler:
+    build:
+      <<: *build
     volumes:
       - .:/var/app/
     ports:
       - "8082:8082"
+  bundler:
+    build:
+      <<: *build

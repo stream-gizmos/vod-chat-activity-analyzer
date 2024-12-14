@@ -27,29 +27,37 @@ function toggleVisibility(nodeId) {
 }
 
 /**
- * @param {string} nodeId
+ * @param {string|Element} elementOrId
  */
-function show(nodeId) {
-    const $container = document.querySelector(`#${nodeId}`)
+function show(elementOrId) {
+    const $node = _findElement(elementOrId)
 
-    if (!$container) {
-        return
+    if ($node) {
+        $node.classList.remove("hidden")
     }
-
-    $container.classList.remove("hidden")
 }
 
 /**
- * @param {string} nodeId
+ * @param {string|Element} elementOrId
  */
-function hide(nodeId) {
-    const $container = document.querySelector(`#${nodeId}`)
+function hide(elementOrId) {
+    const $node = _findElement(elementOrId)
 
-    if (!$container) {
-        return
+    if ($node) {
+        $node.classList.add("hidden")
+    }
+}
+
+/**
+ * @param {string|Element} elementOrId
+ * @return {Element|null}
+ */
+function _findElement(elementOrId) {
+    if (elementOrId instanceof Element) {
+        return elementOrId
     }
 
-    $container.classList.add("hidden")
+    return document.querySelector(`#${elementOrId}`)
 }
 
 /**

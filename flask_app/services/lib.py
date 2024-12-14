@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 from plotly.subplots import make_subplots
 
-from flask_app.services.extension import VodChatFigureUpdater
+from flask_app.services.extension import load_vod_chat_emoticons_updater, VodChatFigureUpdater
 from flask_app.services.utils import (
     IntervalWindow,
     humanize_timedelta,
@@ -161,7 +161,18 @@ def calc_spikes(
     return result
 
 
-def get_custom_emoticons() -> set[str]:
+def get_custom_emoticons(vod_data) -> set[str]:
+    result = get_predefined_emoticons()
+
+    extensions = load_vod_chat_emoticons_updater(vod_data)
+
+    for ext in extensions:
+        result = result.union(ext.add_emoticons())
+
+    return result
+
+
+def get_predefined_emoticons() -> set[str]:
     try:
         with open("emoticons.txt", "r") as fp:
             emoticons = [line.rstrip() for line in fp]
