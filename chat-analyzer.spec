@@ -4,6 +4,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_entry_point
 entry_points = [
     "chat_analyzer.v1.blueprints",
     "chat_analyzer.v1.vod_chat.subplots",
+    "chat_analyzer.v1.vod_chat.emoticons",
 ]
 
 hiddenimports = []

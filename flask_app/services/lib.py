@@ -167,7 +167,7 @@ def get_custom_emoticons(vod_data) -> set[str]:
     extensions = load_vod_chat_emoticons_updater(vod_data)
 
     for ext in extensions:
-        result.union(ext.add_emoticons())
+        result = result.union(ext.add_emoticons())
 
     return result
 

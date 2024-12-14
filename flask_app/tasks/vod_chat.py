@@ -11,6 +11,7 @@ from flask_app.services.lib import (
     hash_to_meta_file,
     hash_to_timestamps_file,
     mine_emoticons,
+    parse_vod_url,
     truncate_last_second_messages,
     url_to_hash,
 )
@@ -106,13 +107,13 @@ class CollectVodChatEmoticons(luigi.Task):
         return DownloadVodChat(self.url)
 
     def output(self) -> luigi.LocalTarget:
-        url = str(self.url)
-        video_hash = url_to_hash(url)
+        video_hash = url_to_hash(str(self.url))
 
         return luigi.LocalTarget(hash_to_emoticons_file(video_hash), UTF8)
 
     def run(self):
-        custom_emoticons = get_custom_emoticons()
+        vod_data = parse_vod_url(str(self.url))
+        custom_emoticons = get_custom_emoticons(vod_data)
 
         emoticons_timestamps: dict[str, list[int]] = {}
         with self.input().open("r") as fp:
