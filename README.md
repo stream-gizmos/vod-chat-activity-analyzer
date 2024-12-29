@@ -1,6 +1,6 @@
 # VOD Chat Activity Analyzer
 
-![screenshot](https://i.imgur.com/7ElycXy.png)
+![screenshot](https://i.imgur.com/uq3kj6g.png)
 
 ## Project Overview
 
