@@ -4,6 +4,16 @@
     <title>VOD Chat Activity Analyzer</title>
     <link type="text/css" rel="stylesheet" href="https://unpkg.com/modern-normalize@^2/modern-normalize.css">
     <link type="text/css" rel="stylesheet" href="{{ url_for("static", filename="main.css") }}">
+    <link type="text/css" rel="stylesheet" href="{{ url_for("static", filename="vue3-toastify/index.css") }}">
+    <script type="importmap">
+    {
+        "imports": {
+            "vue": "{{ url_for("static", filename="vue/vue.esm-browser.prod.js") }}",
+            "vue3-toastify": "{{ url_for("static", filename="vue3-toastify/index.mjs") }}",
+            "vue-helpers": "{{ url_for("static", filename="vue-helpers.js") }}"
+        }
+    }
+    </script>
     <script type="text/javascript" src="{{ url_for("static", filename="theming.js") }}"></script>
     <script>siteTheme.applyCurrentTheme()</script>
     <script type="text/javascript" src="{{ url_for("static", filename="scripts.js") }}" defer></script>
