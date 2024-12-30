@@ -93,18 +93,14 @@ done
 cd /wine/drive_c/Python3
 echo 'wine '\''C:\\Python3\\python.exe'\'' "$@"' > /usr/bin/python
 echo 'wine '\''C:\\Python3\\Scripts\\pip.exe'\'' "$@"' > /usr/bin/pip
-echo 'wine '\''C:\\Python3\\Scripts\\virtualenv.exe'\'' "$@"' > /usr/bin/virtualenv
 echo 'assoc .py=PythonScript' | wine cmd
 echo 'ftype PythonScript=C:\Python3\python.exe "%1" %*' | wine cmd
 while pgrep wineserver >/dev/null; do echo "Waiting for wineserver"; sleep 1; done
 chmod +x \
   /usr/bin/python \
-  /usr/bin/pip \
-  /usr/bin/virtualenv
+  /usr/bin/pip
 (pip install -U pip || true)
 rm -rf /tmp/.wine-*
-
-/usr/bin/pip install virtualenv
 
 # put the src folder inside wine
 mkdir /src/
@@ -128,8 +124,7 @@ set -e
 
 chmod a+x /entrypoint.sh
 
-rm -rf venv/ || true
-/usr/bin/virtualenv venv
+python -m venv --clear --upgrade-deps venv
 
 # In case the user specified a custom URL for PYPI, then use that one, instead of the default one.
 if [[ "$PYPI_URL" != "https://pypi.python.org/" ]] || \

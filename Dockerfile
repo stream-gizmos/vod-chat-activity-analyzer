@@ -7,7 +7,6 @@ apt update -y
 apt install -y git
 
 python -m ensurepip --upgrade
-python -m pip install --upgrade pip setuptools virtualenv
 EOT
 
 WORKDIR /var/app/
@@ -20,7 +19,7 @@ set -ex
 mkdir -p -m 0600 ~/.ssh
 ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-virtualenv venv
+python -m venv --clear --upgrade-deps venv
 ./venv/bin/pip install -r requirements.txt
 EOT
 
