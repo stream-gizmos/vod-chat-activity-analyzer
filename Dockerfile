@@ -19,7 +19,7 @@ set -ex
 mkdir -p -m 0600 ~/.ssh
 ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-python -m venv --clear --upgrade-deps venv
+python -m venv --upgrade-deps venv
 ./venv/bin/pip install -r requirements.txt
 EOT
 

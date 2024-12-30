@@ -3,6 +3,7 @@
 **/__pycache__/
 Dockerfile
 compose*.yaml
+/venv/
 /data/**/*.json
 /data/**/*.jsonl
 /data/**/*.*.lock

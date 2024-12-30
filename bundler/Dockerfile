@@ -124,7 +124,7 @@ set -e
 
 chmod a+x /entrypoint.sh
 
-python -m venv --clear --upgrade-deps venv
+python -m venv --upgrade-deps venv
 
 # In case the user specified a custom URL for PYPI, then use that one, instead of the default one.
 if [[ "$PYPI_URL" != "https://pypi.python.org/" ]] || \
