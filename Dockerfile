@@ -2,11 +2,11 @@ FROM python:3.11-slim AS packages
 
 RUN <<EOT
 set -ex
-python -m ensurepip --upgrade
-python -m pip install --upgrade pip setuptools
 
 apt update -y
 apt install -y git
+
+python -m ensurepip --upgrade
 EOT
 
 WORKDIR /var/app/
@@ -19,7 +19,8 @@ set -ex
 mkdir -p -m 0600 ~/.ssh
 ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-pip install -r requirements.txt
+python -m venv --upgrade-deps venv
+./venv/bin/pip install -r requirements.txt
 EOT
 
 
@@ -27,7 +28,6 @@ EOT
 FROM python:3.11-slim
 
 COPY --from=packages /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=packages /usr/local/bin/luigid /usr/local/bin/luigid
 
 WORKDIR /var/app/
 
@@ -38,4 +38,4 @@ VOLUME ./data
 
 STOPSIGNAL SIGINT
 
-CMD ["python", "web_app.py"]
+CMD ["./venv/bin/python", "web_app.py"]
