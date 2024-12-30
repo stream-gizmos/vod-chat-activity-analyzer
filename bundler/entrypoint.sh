@@ -12,11 +12,11 @@ WORKDIR=${SRCDIR:-/src}
 cd $WORKDIR
 
 if [ -f requirements.txt ]; then
-    pip install -r requirements.txt
+    wine venv/Scripts/pip.exe install -r requirements.txt
 fi
 
 if [[ "$@" == "" ]]; then
-    pyinstaller -y --dist ./dist/windows *.spec
+    wine venv/Scripts/pyinstaller.exe -y --dist ./dist/windows *.spec
     chown -R --reference=. ./dist/windows
 else
     sh -c "$@"

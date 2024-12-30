@@ -11,5 +11,6 @@ services:
     build:
       dockerfile: bundler/Dockerfile
       context: .
+    pull_policy: build
     volumes:
-      - .:/src/:rw
+      - ./dist:/src/dist/:rw
