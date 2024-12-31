@@ -31,13 +31,12 @@ docker compose up -d
 
 If you don't have the Docker Engine, then you can run the project via a local Python:
 
-1. Install the [`virtualenv`](https://virtualenv.pypa.io/en/latest/user_guide.html) package to isolate the project dependencies: `pip install virtualenv`
-2. Init the virtual environment: `python -m virtualenv venv`
-3. Activate the virtual environment: `.\venv\Scripts\activate`
-4. Install the dependencies: `pip install -r requirements.txt`
-5. Start the web-server: `python web_app.py`
-6. Start the tasks server: `luigid --pidfile ./data/luigid.pid --logdir ./data/`
-7. Visit http://localhost:8080 in your web browser to view the application.
+1. Init the virtual environment: `python -m venv venv`
+2. Activate the virtual environment: `.\venv\Scripts\activate`
+3. Install the dependencies: `pip install -r requirements.txt`
+4. Start the web-server: `python web_app.py`
+5. Start the tasks server: `luigid --pidfile ./data/luigid.pid --logdir ./data/`
+6. Visit http://localhost:8080 in your web browser to view the application.
 
 ### User Guide
 

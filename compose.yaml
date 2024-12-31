@@ -5,7 +5,7 @@ services:
   scheduler:
     build: .
     restart: always
-    command: [ "./venv/bin/luigid", "--pidfile", "./data/luigid.pid", "--logdir", "./data/" ]
+    command: [ "luigid", "--pidfile", "./data/luigid.pid", "--logdir", "./data/" ]
   bundler:
     profiles: [ tools ]
     build:

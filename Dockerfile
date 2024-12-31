@@ -1,4 +1,6 @@
-FROM python:3.11-slim AS packages
+ARG PYTHON_TAG=3.11-slim
+
+FROM python:$PYTHON_TAG AS packages
 
 RUN <<EOT
 set -ex
@@ -25,17 +27,17 @@ EOT
 
 
 
-FROM python:3.11-slim
-
-COPY --from=packages /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+FROM python:$PYTHON_TAG
 
 WORKDIR /var/app/
 
 COPY --from=packages /var/app/ .
 COPY --link . .
 
+ENV PATH="/var/app/venv/bin:$PATH"
+
 VOLUME ./data
 
 STOPSIGNAL SIGINT
 
-CMD ["./venv/bin/python", "web_app.py"]
+CMD ["python", "web_app.py"]
